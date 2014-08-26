@@ -16,14 +16,23 @@ Global
 		SccLocalPath1 = Findit
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		CD_ROM|Any CPU = CD_ROM|Any CPU
 		Debug|Any CPU = Debug|Any CPU
+		DVD-5|Any CPU = DVD-5|Any CPU
 		Release|Any CPU = Release|Any CPU
+		SingleImage|Any CPU = SingleImage|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.CD_ROM|Any CPU.ActiveCfg = Release|Any CPU
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.CD_ROM|Any CPU.Build.0 = Release|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.DVD-5|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.DVD-5|Any CPU.Build.0 = Debug|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.SingleImage|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

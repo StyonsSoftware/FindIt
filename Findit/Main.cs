@@ -6,7 +6,6 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.Threading;
-using System.Diagnostics;
 
 namespace Findit
 {
@@ -15,7 +14,15 @@ namespace Findit
         GrepTool.Grepper gp;
         Thread searchThread;
         GrepTool.Grepper.UserParameters uparms;
+        Findit.Registration regInfo;
+        Boolean g_Crippled = false;
+        Boolean AlreadyQuit = false;
+        Boolean FinishedLoading = false;
+
         private int LastReadResult = 0;
+        private const int c_RecentSearchCutoff = 10;
+        private const int c_MaxRecentSearches = 10;
+        const int c_buffer = 20;
 
         public frmMain()
         {
@@ -24,16 +31,63 @@ namespace Findit
 
         private void frmMain_Load(object sender, EventArgs e)
         {
-            //CueTextHandler.SetCueText(txbSearchFor, "Search term");
-            CueTextHandler.SetCueText(cboSearchFolders, "Folder to search");
             splitCont.Panel2Collapsed = true;
-            ManuallyArrangeOutputArea();
-            LoadPrefsFromRegistry();
+            LoadSearchParameters();
+            LoadGuiPreferences();
             HighlightInvalidFolder();
-            cboSearchFolders.Select();
+            rtbSearchTerms.Select();
             openFileInCustomEditorToolStripMenuItem.ToolTipText = "Opens the selected file in an editor of your choice" +
                 Environment.NewLine + "To change the custom editor, use the Tools->Options menu";
-            openEnclosingFolderToolStripMenuItem.ToolTipText = "test" + Environment.NewLine + "me";
+
+            //permit passing a saved search as a start parameter.
+            //this facilitates the ability to double-click a ".fit" file and
+            //launch the application with the saved terms
+            string[] cmdLineArgs = Environment.GetCommandLineArgs();
+            if((1 < cmdLineArgs.Length) && (System.IO.File.Exists(cmdLineArgs[0])))
+            {
+                LoadSavedSearch(cmdLineArgs[1]);
+            }
+
+            ApplyLicenseRules();
+            SetSearchTermsWidth();
+            FinishedLoading = true;
+            ManuallyArrangeOutputArea();
+            SetSearchTermsWidth();
+        }
+
+        private void ApplyLicenseRules()
+        {
+            regInfo = new Registration();
+
+            if (regInfo.PaidFor())
+            {
+                SetPerformanceCrippling(false);
+            }
+            else
+            {
+                if (regInfo.WithinTrialPeriod())
+                {
+                    BegForMoney();
+                    SetPerformanceCrippling(false);
+                }
+                else
+                {
+                    BegForMoney();
+                    SetPerformanceCrippling(!regInfo.PaidFor());
+                }
+            }
+        }
+
+        private void SetPerformanceCrippling(Boolean IsCrippled)
+        {
+            g_Crippled = IsCrippled;
+        }
+
+        private void BegForMoney()
+        {
+            PurchaseOptions regForm = new PurchaseOptions();
+            regForm.StartPosition = FormStartPosition.CenterParent;
+            regForm.ShowDialog();
         }
 
         private void ManuallyArrangeOutputArea()
@@ -44,84 +98,114 @@ namespace Findit
             splitCont.SplitterDistance = panMid.Width / 2;
         }
 
-        private void SavePrefsToRegistry()
+        private int SizeOfSearchTermsBox(ref RichTextBox searchTermsBox, int minimumSize, int maximumSize, int buffer)
+        {
+            /*
+             * Size of the search terms box:
+             * Minimum = width of the label above it + [buffer]
+             * Maximum = up to edge of the form - [buffer]
+             * Preferred = width of the widest text item in the box + [buffer]
+            */
+
+            //int minimumSize = lblSearchTerms.Width + buffer;
+            //int maximumSize = tpgBasic.Width - rtbSearchTerms.Left - buffer;
+            
+            //calculate the "preferred size"
+            int preferredSize = 0;
+            foreach (string s in rtbSearchTerms.Lines)
+            {
+                preferredSize = Math.Max(preferredSize, Util.GetPixelWidthOfFormattedText(s, searchTermsBox.Font, searchTermsBox.Width)) + buffer;
+            }
+
+            if (preferredSize > maximumSize)
+            {
+                return maximumSize;
+            }
+            else if (preferredSize < minimumSize)
+            {
+                return minimumSize;
+            }
+            else
+            {
+                return preferredSize;
+            }
+        }
+
+        private SearchParameters SearchParametersFromUI()
+        {
+            SearchParameters sp = new SearchParameters();
+            sp.FileTypeFilter = txbFileType.Text;
+            sp.FileExcludeFilter = txbFileExclude.Text;
+            sp.IncludeLineNosInOutput = cbLineNos.Checked;
+            sp.SearchFolder = cboSearchFolders.Text;
+            sp.IncludeLineNosInOutput = cbLineNos.Checked;
+            sp.SearchSubfolders = cbIncludeSubfolders.Checked;
+            sp.OnlySearchFileNames = cbOnlyFiles.Checked;
+            sp.CaseSensitive = cbCaseSensitive.Checked;
+            sp.IncludePerfStats = cbPerfStats.Checked;
+            sp.SearchTerms = rtbSearchTerms.Lines;
+            sp.ExcludeTerms = rtbExcludes.Lines;
+            return sp;
+        }
+
+        private GUIPreferences GuiPreferencesFromUI()
         {
             GUIPreferences gp = new GUIPreferences();
-            gp.FileTypeFilter = txbFileType.Text;
-            gp.FileExcludeFilter = txbFileExclude.Text;
-            gp.IncludeLineNosInOutput = cbLineNos.Checked;
-            gp.SearchFolder = cboSearchFolders.Text;
-            gp.IncludeLineNosInOutput = cbLineNos.Checked;
-            gp.SearchSubfolders = cbIncludeSubfolders.Checked;
-            gp.CaseSensitive = cbCaseSensitive.Checked;
-            gp.IncludePerfStats = cbPerfStats.Checked;
-            gp.SearchTerms = rtbSearchTerms.Lines;
-            gp.ExcludeTerms = rtbExcludes.Lines;
-            gp.RecentSearchFolders = ComboToStrArry(ref cboSearchFolders, 10);
-            if((gp.RecentSearchFolders.Length == 1) && (gp.RecentSearchFolders[0].Length == 0))
+            gp.RecentSavedSearches = Util.MenuChildrenToStrArry(ref recentSearchesToolStripMenuItem, false);
+            gp.RecentSearchFolders = Util.ComboToStrArry(ref cboSearchFolders, c_RecentSearchCutoff);
+            if ((gp.RecentSearchFolders.Length == 1) && (gp.RecentSearchFolders[0].Length == 0))
             {
                 gp.RecentSearchFolders = null;
             }
+
+            return gp;
+        }
+
+        private void SavePreferences()
+        {
+            SearchParameters sp = SearchParametersFromUI();
+            sp.SaveToRegistry();
+
+            GUIPreferences gp = GuiPreferencesFromUI();
             gp.SaveToRegistry();
         }
 
-        private string[] ComboToStrArry(ref ComboBox cbo, int cutoff)
+        private void LoadSearchParameters()
         {
-            //transfer the combo box items into a string array
-            string[] result = { "" };
-
-            while (cboSearchFolders.Items.Count > cutoff)
-            {
-                cboSearchFolders.Items.RemoveAt(0);
-            }
-
-            int nonblankitemcount = 0;
-            foreach (string s in cboSearchFolders.Items)
-            {
-                if (0 < s.Length)
-                {
-                    nonblankitemcount++;
-                }
-            }
-
-            int n = 0;
-            Array.Resize(ref result, nonblankitemcount);
-            for (int i = 0; i < cboSearchFolders.Items.Count; ++i)
-            {
-                string currentitem = cboSearchFolders.Items[i].ToString();
-                if (0 < currentitem.Length)
-                {
-                    result[n] = currentitem;
-                    n++;
-                }
-            }
-            return result;
+            SearchParameters sp = new SearchParameters();
+            UIFromSearchParameters(sp); 
         }
 
-        private void StrArryToComboItems(ref ComboBox cbo, string[] strarry)
+        private void LoadGuiPreferences()
         {
-            cbo.Items.Clear();
-            foreach (string s in strarry)
-            {
-                cbo.Items.Add(s);
-            }
-        }
-
-        private void LoadPrefsFromRegistry()
-        {
-
             GUIPreferences gp = new GUIPreferences();
-            gp.LoadFromRegistry();
-            cboSearchFolders.Text = gp.SearchFolder;
-            txbFileType.Text = gp.FileTypeFilter;
-            txbFileExclude.Text = gp.FileExcludeFilter;
-            cbLineNos.Checked = gp.IncludeLineNosInOutput;
-            cbIncludeSubfolders.Checked = gp.SearchSubfolders;
-            cbCaseSensitive.Checked = gp.CaseSensitive;
-            cbPerfStats.Checked = gp.IncludePerfStats;
-            rtbSearchTerms.Lines = gp.SearchTerms;
-            rtbExcludes.Lines = gp.ExcludeTerms;
-            StrArryToComboItems(ref cboSearchFolders, gp.RecentSearchFolders);
+            UIFromGuiPreferences(gp);
+        }
+
+        private void UIFromSearchParameters(SearchParameters sp)
+        {
+            //make the UI match a preferences object
+            txbFileType.Text = sp.FileTypeFilter;
+            txbFileExclude.Text = sp.FileExcludeFilter;
+            cbLineNos.Checked = sp.IncludeLineNosInOutput;
+            cbIncludeSubfolders.Checked = sp.SearchSubfolders;
+            cbOnlyFiles.Checked = sp.OnlySearchFileNames;
+            cbCaseSensitive.Checked = sp.CaseSensitive;
+            cbPerfStats.Checked = sp.IncludePerfStats;
+            rtbSearchTerms.Lines = sp.SearchTerms;
+            rtbExcludes.Lines = sp.ExcludeTerms;
+            cboSearchFolders.Text = sp.SearchFolder;
+        }
+
+        private void UIFromGuiPreferences(GUIPreferences gp)
+        {
+            Util.StrArryToComboItems(ref cboSearchFolders, gp.RecentSearchFolders, false);
+            Util.StrArryToMenuChildren(ref recentSearchesToolStripMenuItem, gp.RecentSavedSearches, false);
+            //each of the menu items must have an event handler assigned
+            foreach (ToolStripItem ts in recentSearchesToolStripMenuItem.DropDownItems)
+            {
+                ts.Click += LoadRecentlyUsedSearch;
+            }
         }
 
         private void ConductSearch()
@@ -143,7 +227,9 @@ namespace Findit
             uparms.SearchExcludeFiles = txbFileExclude.Text;
             uparms.ShowPerfStats = cbPerfStats.Checked;
             uparms.AbsentStrings = rtbExcludes.Lines;
-
+            uparms.Crippled = g_Crippled;
+            uparms.OnlyFileNames = cbOnlyFiles.Checked;
+            
             gp = new GrepTool.Grepper(uparms);
             searchThread = new Thread(gp.Search);
             searchThread.IsBackground = true;
@@ -169,11 +255,47 @@ namespace Findit
 
         private void btnSearch_Click(object sender, EventArgs e)
         {
-            ConductSearch();
-            if(-1 == cboSearchFolders.Items.IndexOf(cboSearchFolders.Text))
+            string validmsg = "";
+            if (ValidSearchTerms(ref validmsg))
             {
-                cboSearchFolders.Items.Add(cboSearchFolders.Text);
+                ConductSearch();
+                AddToRecentSearches(cboSearchFolders.Text.Trim());
             }
+            else
+            {
+                validmsg += Environment.NewLine + "Search anyway?";
+                if (DialogResult.Yes == MessageBox.Show(validmsg,"Confirm",MessageBoxButtons.YesNo))
+                {
+                    ConductSearch();
+                    AddToRecentSearches(cboSearchFolders.Text.Trim());
+                }
+            }
+        }
+
+        private Boolean ValidSearchTerms(ref string msg)
+        {
+            //either a search term has been specified or an exclude term has been specified,
+            //or they are just searching for file names and specified
+            Boolean result =
+                   (0 < rtbSearchTerms.Lines.Length)
+                || (0 < rtbExcludes.Lines.Length)
+                || (
+                    (cbOnlyFiles.Checked) &&
+                    (
+                     (0 < txbFileType.Text.Length)
+                     ||
+                     (0 < txbFileExclude.Text.Length)
+                    )
+                   );
+            if (!result)
+            {
+                msg = "No valid search terms have been specified!";
+            }
+            else
+            {
+                msg = "";
+            }
+            return result;
         }
 
         private void SetEnabledStatesDuringSearch(Boolean SearchIsInProgress)
@@ -206,7 +328,7 @@ namespace Findit
 
         private void RefreshSearchResults()
         {
-            if (LastReadResult < gp.SearchResultCount)
+            if ((gp != null) && (LastReadResult < gp.SearchResultCount))
             {
                 for (int i = LastReadResult; i < gp.SearchResultCount; ++i)
                 {
@@ -276,6 +398,8 @@ namespace Findit
                 runSearchToolStripMenuItem.Visible = false;
                 cancelSearchToolStripMenuItem.Visible = true;
                 lblProgress.Text = gp.LastSearchedFolder;
+                lblCrippled.Visible = g_Crippled;
+                btnClear.Enabled = false;
             }
             else
             {
@@ -283,8 +407,10 @@ namespace Findit
                 btnSearch.Text = "Search";
                 runSearchToolStripMenuItem.Visible = true;
                 cancelSearchToolStripMenuItem.Visible = false;
+                rtbSearchTerms.Enabled = true;
                 lblProgress.Text = "Search complete!";
-                
+                lblCrippled.Visible = false;
+                btnClear.Enabled = true;
             }
             SetEnabledStatesDuringSearch(!btnSearch.Enabled);
             btnCancel.Enabled = !btnSearch.Enabled;
@@ -310,14 +436,14 @@ namespace Findit
                 writeoutput("");
                 writeoutput("Performance stats:");
                 writeoutput("-------------------------------");
-                writeoutput("Elapsed seconds : " + gp.PerformanceStats.ElapsedSeconds.ToString());
-                writeoutput("Files searched  : " + gp.PerformanceStats.FilesSearched.ToString());
-                writeoutput("Lines searched  : " + gp.PerformanceStats.LinesSearched.ToString());
+                writeoutput("Elapsed seconds: " + gp.PerformanceStats.ElapsedSeconds.ToString());
+                writeoutput("Files searched: " + gp.PerformanceStats.FilesSearched.ToString());
+                writeoutput("Lines searched: " + gp.PerformanceStats.LinesSearched.ToString());
                 writeoutput("Files per second: " + fps.ToString());
                 writeoutput("Lines per second: " + lps.ToString());
-                writeoutput("Matches         : " + gp.PerformanceStats.Matches.ToString());
+                writeoutput("Matches: " + gp.PerformanceStats.Matches.ToString());
                 writeoutput("Skipped (binary): " + gp.PerformanceStats.Skipped.ToString());
-                writeoutput("Errors          : " + gp.PerformanceStats.Errors.ToString());
+                writeoutput("Errors: " + gp.PerformanceStats.Errors.ToString());
                 writeoutput("");
             }
             catch (Exception e)
@@ -347,7 +473,7 @@ namespace Findit
 
         private Boolean QuitApplication()
         {
-            SavePrefsToRegistry();
+            SavePreferences();
             if (SearchIsActive())
             {
                 if (DialogResult.Yes == MessageBox.Show("A search is in progress.  Really quit?",
@@ -382,29 +508,45 @@ namespace Findit
 
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
-            SavePrefsToRegistry();
-            e.Cancel = !QuitApplication();            
+            //FormClosing fires twice, but we only want to run the quit stuff once
+            if (AlreadyQuit)
+            {
+                e.Cancel = false;
+            }
+            else
+            {
+                AlreadyQuit = true;
+                e.Cancel = !QuitApplication();
+            }
         }
 
-        private void txbDirectory_KeyUp(object sender, KeyEventArgs e)
+        private void RefreshExcerptPane(string filename, Int64 linenumber, ref RichTextBox rtb, string[] highlightwords)
         {
-            HighlightInvalidFolder();
-        }
-
-        private void RefreshExcerptPane(string filename, Int64 linenumber)
-        {
-            rtbExcerpt.Clear();
+            //Display an excerpt of the selected file, centered on the specified line number
+            rtb.Clear();
             Int64 LastReadLine = 1;
             Int64 StartPoint = linenumber - 10;
             Int64 EndPoint = linenumber + 10;
+            Int64 maxCutoff = 1000;
+            Int64 iters = 0;
             System.IO.StreamReader reader = new System.IO.StreamReader(filename);
             string currentLine = "";
             do
             {
                 currentLine = reader.ReadLine();
+                if((currentLine == null) || (-1 < currentLine.IndexOf("\0\0\0\0\0\0\0")))
+                {
+                    rtb.Clear();
+                    System.IO.FileInfo finfo = new System.IO.FileInfo(filename);
+                    System.Diagnostics.FileVersionInfo myFileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(filename);
+                    rtb.AppendText("This is a binary file.  Preview is not available.");
+                    rtb.AppendText(Environment.NewLine + "File size (in MB): " + Math.Round(finfo.Length / 1048576.0,4).ToString());
+                    rtb.AppendText(Environment.NewLine + "File version     : " + myFileVersionInfo.FileVersion);
+                    break;
+                }
                 if ((currentLine != null) && (LastReadLine > StartPoint) && (LastReadLine < EndPoint))
                 {
-                    rtbExcerpt.AppendText(currentLine + Environment.NewLine);
+                    rtb.AppendText(currentLine + Environment.NewLine);
                 }
                 LastReadLine++;
 
@@ -412,10 +554,17 @@ namespace Findit
                 {
                     break;
                 }
+                if (++iters > (maxCutoff + linenumber))
+                {
+                    MessageBox.Show("Looped more than " + maxCutoff.ToString() + " in 'RefreshExceptPane' with these arguments:"
+                        + Environment.NewLine + "filename = '" + filename + "'"
+                        + Environment.NewLine + "linenumber = " + linenumber.ToString());
+                    break;
+                }
             } while (!reader.EndOfStream);
-            foreach (string s in rtbSearchTerms.Lines)
+            foreach (string s in highlightwords)
             {
-                HighlightWordInRtb(ref rtbExcerpt, s);
+                Util.HighlightWordInRtb(ref rtb, s);
             }
             reader.Close();
             splitCont.Panel2Collapsed = false;
@@ -429,7 +578,7 @@ namespace Findit
                 if (System.IO.File.Exists(selectedfname))
                 {
                     Int64 CenterOnThisLine = gp.SearchResults[lbResults.SelectedIndex].LineNumber;
-                    RefreshExcerptPane(selectedfname, CenterOnThisLine);
+                    RefreshExcerptPane(selectedfname, CenterOnThisLine, ref rtbExcerpt, rtbSearchTerms.Lines);
                 }
             }
             catch
@@ -438,45 +587,9 @@ namespace Findit
             }
         }
 
-        private void HighlightWordInRtb(ref RichTextBox rtb, string WordToHighlight)
-        {
-            int i = 0;
-            while (i != -1)
-            {
-                i = rtb.Text.IndexOf(WordToHighlight, i, StringComparison.CurrentCultureIgnoreCase);
-                if (i != -1)
-                {
-                    rtb.SelectionStart = i;
-                    rtb.SelectionLength = WordToHighlight.Length;
-                    rtb.SelectionColor = Color.Red;
-                    i = i + WordToHighlight.Length;
-                }
-            }
-        }
-
-        private void OpenFile(string fname, string customexe)
-        {
-            if (System.IO.File.Exists(fname) || System.IO.Directory.Exists(fname))
-            {
-                if (System.IO.File.Exists(customexe))
-                {
-                    //start using the custom exe they asked for
-                    Process ntpdplpl = new Process();
-                    ntpdplpl.StartInfo.FileName = customexe;
-                    ntpdplpl.StartInfo.Arguments = fname;
-                    ntpdplpl.Start();
-                }
-                else
-                {
-                    //let the system decide what is the best editor
-                    System.Diagnostics.Process.Start(fname);
-                }
-            }
-        }
-
         private void lbResults_DoubleClick(object sender, EventArgs e)
         {
-            OpenFileInCustomEditor(SelectedResultsFile());
+            Util.OpenFileInCustomEditor(SelectedResultsFile(),CustomEditorExeName());
         }
 
         private void btnTogglePreview_Click(object sender, EventArgs e)
@@ -486,42 +599,95 @@ namespace Findit
 
         private void frmMain_ClientSizeChanged(object sender, EventArgs e)
         {
-            ManuallyArrangeOutputArea();
+            if (FinishedLoading)
+            {
+                ManuallyArrangeOutputArea();
+                SetSearchTermsWidth();
+            }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private Boolean StringArraysAreTheSame(string[] arry1, string[] arry2)
         {
-            ClearOptions();
+            if (arry1.Length != arry2.Length)
+            {
+                return false;
+            }
+            else
+            {
+                for (int i = 0; i < arry1.Length; ++i)
+                {
+                    if (arry2[i] != arry1[i])
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private Boolean CustomAdvancedOptions()
+        {
+            //returns true if the advanced options area has been customized in some way
+            return (
+                    (!StringArraysAreTheSame(rtbExcludes.Lines, SearchParameters.DefaultExcludeList()))
+                    ||
+                    (txbFileExclude.Text != SearchParameters.DefaultExcludeFilter())
+                    ||
+                    (cbCaseSensitive.Checked != SearchParameters.DefaultCaseSensitiveState())
+                    ||
+                    (cbIncludeSubfolders.Checked != SearchParameters.DefaultIncludeSubfoldersState())
+                    ||
+                    (cbOnlyFiles.Checked != SearchParameters.DefaultOnlyFilesState())
+                    ||
+                    (cbLineNos.Checked != SearchParameters.DefaultIncludeLineNosState())
+                    ||
+                    (cbPerfStats.Checked != SearchParameters.DefaultIncludePerfStatsState())
+                   );
         }
 
         private void ClearOptions()
         {
-            cboSearchFolders.Text = @"C:\";
-            rtbSearchTerms.Clear();
-            rtbExcludes.Clear();
+            //basic options
+            cboSearchFolders.Text = SearchParameters.DefaultSearchFolder();
+            rtbSearchTerms.Lines = SearchParameters.DefaultSearchTermList();
+
+            //advanced options
+            rtbExcludes.Lines = SearchParameters.DefaultExcludeList();
+            txbFileType.Text = SearchParameters.DefaultFileTypeFilter();
+            txbFileExclude.Text = SearchParameters.DefaultExcludeFilter();
+            cbCaseSensitive.Checked = SearchParameters.DefaultCaseSensitiveState();
+            cbIncludeSubfolders.Checked = SearchParameters.DefaultIncludeSubfoldersState();
+            cbOnlyFiles.Checked = SearchParameters.DefaultOnlyFilesState();
+            cbLineNos.Checked = SearchParameters.DefaultIncludeLineNosState();
+            cbPerfStats.Checked = SearchParameters.DefaultIncludePerfStatsState();
+
+            //results area
             rtbExcerpt.Clear();
             lbResults.Items.Clear();
-            txbFileType.Text = "*.*";
-            txbFileExclude.Clear();
-            cbCaseSensitive.Checked = false;
-            cbIncludeSubfolders.Checked = true;
-            cbLineNos.Checked = false;
-            cbPerfStats.Checked = false;
+
+            tabctlSearchOptions.Refresh();
         }
 
-        private void txbDirectory_TextChanged(object sender, EventArgs e)
+        private void AddToRecentSearches(string s)
         {
-            HighlightInvalidFolder();
+            if (-1 == cboSearchFolders.Items.IndexOf(s))
+            {
+                cboSearchFolders.Items.Add(s);
+            }
         }
 
         private void runSearchToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ConductSearch();
+            AddToRecentSearches(cboSearchFolders.Text.Trim());
         }
 
         private void cancelSearchToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            CancelSearch();
+            if (SearchIsActive())
+            {
+                CancelSearch();
+            }
         }
 
         private void copyToClipboardToolStripMenuItem_Click(object sender, EventArgs e)
@@ -570,7 +736,7 @@ namespace Findit
         {
             try
             {
-                OpenFile(lbResults.Items[lbResults.SelectedIndex].ToString().Trim(),"");
+                Util.OpenFile(lbResults.Items[lbResults.SelectedIndex].ToString().Trim(),"");
             }
             catch
             {
@@ -582,17 +748,12 @@ namespace Findit
         {
             if (0 < SelectedResultsFile().Length)
             {
-                OpenFileInCustomEditor(SelectedResultsFile());
+                Util.OpenFileInCustomEditor(SelectedResultsFile(),CustomEditorExeName());
             }
             else
             {
                 MessageBox.Show("Select a row first!");
             }
-        }
-
-        private void OpenFileInCustomEditor(string filename)
-        {
-            OpenFile(filename,CustomEditorExeName());
         }
 
         private string CustomEditorExeName()
@@ -601,11 +762,17 @@ namespace Findit
             return gp.CustomEditorExe;
         }
 
+        private Boolean RunSavedSearchesAfterLoad()
+        {
+            GUIPreferences gp = new GUIPreferences();
+            return gp.RunSearchesAfterLoad;
+        }
+
         private void openEnclosingFolderToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (0 < SelectedResultsFile().Length)
             {
-                OpenEnclosingFolder(SelectedResultsFile());
+                Util.OpenEnclosingFolder(SelectedResultsFile());
             }
             else
             {
@@ -617,20 +784,11 @@ namespace Findit
         {
             if (lbResults.SelectedItem != null)
             {
-
                 return lbResults.SelectedItem.ToString();
             }
             else
             {
                 return "";
-            }
-        }
-
-        private void OpenEnclosingFolder(string fullfilename)
-        {
-            if (System.IO.File.Exists(fullfilename))
-            {
-                OpenFile(System.IO.Directory.GetParent(fullfilename).ToString(), "");
             }
         }
 
@@ -645,5 +803,405 @@ namespace Findit
             cf.ShowDialog();
         }
 
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            if(DialogResult.Yes == MessageBox.Show("Really reset your filter options?","Confirm",MessageBoxButtons.YesNo))
+            {
+                ClearOptions();
+            }
+        }
+
+        private Brush GetBackgroundBrush(int TabIdx)
+        {
+            return new SolidBrush(tpgAdvanced.BackColor);
+        }
+
+        private Brush GetForegroundBrush(int TabIdx)
+        {
+            return new SolidBrush(tpgAdvanced.ForeColor);
+        }
+
+        private Font GetTabCaptionFont(int TabIdx, Font currFont)
+        {
+            //return the font that is correct for the given tab index
+            //the "correct" font is based on the current font of that tab.
+            Font resultFont = new Font(currFont,currFont.Style);
+            switch (TabIdx)
+            {
+                case 0:
+                    resultFont = new Font(currFont, FontStyle.Bold); break;
+                case 1:
+                    if(CustomAdvancedOptions())
+                    {
+                        resultFont = new Font(currFont, FontStyle.Italic | FontStyle.Bold);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return resultFont;
+        }
+
+        private void tabctlSearchOptions_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            //this event is the plumbing for the "Advanced Options" tab to be drawn in
+            //italics whenever non-default options are set on that tab.
+            //see the "GetTabCaptionFont" function for the important decision-making
+            Font TabFont;
+            Brush BackBrush = GetBackgroundBrush(e.Index);
+            Brush ForeBrush = GetForegroundBrush(e.Index);
+            TabFont = GetTabCaptionFont(e.Index, e.Font);
+            string TabName = this.tabctlSearchOptions.TabPages[e.Index].Text;
+            StringFormat sf = new StringFormat();
+            sf.Alignment = StringAlignment.Center;
+            e.Graphics.FillRectangle(BackBrush, e.Bounds);
+            Rectangle r = e.Bounds;
+            r = new Rectangle(r.X - 2, r.Y + 3, r.Width + 5, r.Height - 3);
+            e.Graphics.DrawString(TabName, TabFont, ForeBrush, r, sf);
+            
+            //Cleanup
+            sf.Dispose();
+            TabFont.Dispose();
+            BackBrush.Dispose();
+            BackBrush.Dispose();
+            ForeBrush.Dispose();
+        }
+
+        private void SaveCurrentSearch()
+        {
+            //save by seriallizing the preferences object
+            SaveFileDialog svdg = new SaveFileDialog();
+            svdg.Filter = "FindIt files (*.fit)|*.fit|All files (*.*)|*.*";
+            svdg.FilterIndex = 1;
+            if (svdg.ShowDialog() == DialogResult.OK)
+            {
+                Serializer s = new Serializer();
+                s.SerializeObject(svdg.FileName, SearchParametersFromUI());
+                AddSavedSearchToRecentSearches(svdg.FileName, c_MaxRecentSearches);
+            }
+        }
+
+        private void PromptForSavedSearch()
+        {
+            OpenFileDialog opdg = new OpenFileDialog();
+            opdg.Title = "Choose a saved search";
+            opdg.InitialDirectory = "c:\\";
+            opdg.Filter = "FindIt files (*.fit)|*.fit|All files (*.*)|*.*";
+            opdg.FilterIndex = 1;
+            opdg.RestoreDirectory = true;
+
+            if (opdg.ShowDialog() == DialogResult.OK)
+            {
+                LoadSavedSearch(opdg.FileName);
+                AddSavedSearchToRecentSearches(opdg.FileName,c_MaxRecentSearches);
+            }
+        }
+
+        private void LoadSavedSearch(string savedsearchfilename)
+        {
+            //do a few gymnastics to avoid losing the "recent locations" when we reset the combo box to
+            //the contents of the loaded search
+            if (System.IO.File.Exists(savedsearchfilename))
+            {
+                string[] recentlocations = Util.ComboToStrArry(ref cboSearchFolders, c_RecentSearchCutoff);
+                Serializer s = new Serializer();
+                UIFromSearchParameters(s.DeSerializeObject(savedsearchfilename));
+                string loadedlocation = cboSearchFolders.Text;
+                foreach (string recentloc in recentlocations)
+                {
+                    AddToRecentSearches(recentloc);
+                }
+                AddToRecentSearches(loadedlocation);
+                cboSearchFolders.SelectedIndex = cboSearchFolders.Items.IndexOf(loadedlocation);
+
+                if (RunSavedSearchesAfterLoad())
+                {
+                    ConductSearch();
+                }
+            }
+        }
+
+        private void saveThisSearchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveCurrentSearch();
+        }
+
+        private void loadASavedSearchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            PromptForSavedSearch();
+            tabctlSearchOptions.Refresh();
+        }
+
+        private void registerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            PurchaseOptions regForm = new PurchaseOptions();
+            regForm.StartPosition = FormStartPosition.CenterParent;
+            regForm.ShowDialog();
+            SetPerformanceCrippling(!regInfo.PaidFor());
+        }
+
+        private void AddSavedSearchToRecentSearches(string savedsearch, int maxSearches)
+        {
+            //add a sub-menu item to the "File->Recent searches menu item" with the recent search file name
+
+            //prevent duplicates
+            Boolean alreadyExists = false;
+            foreach (ToolStripMenuItem ts in recentSearchesToolStripMenuItem.DropDownItems)
+            {
+                if (ts.Text == savedsearch)
+                {
+                    alreadyExists = true;
+                    break;
+                }
+            }
+
+            if (!alreadyExists)
+            {
+                recentSearchesToolStripMenuItem.DropDownItems.Add(savedsearch);
+                //add an event handler so that something happens when they click the new menu item
+                recentSearchesToolStripMenuItem.DropDownItems[recentSearchesToolStripMenuItem.DropDownItems.Count - 1].Click += LoadRecentlyUsedSearch;
+            }
+
+            //enforce the "maxSearches" param
+            while (maxSearches < recentSearchesToolStripMenuItem.DropDownItems.Count)
+            {
+                recentSearchesToolStripMenuItem.DropDownItems.RemoveAt(0);
+            }
+        }
+
+        private void LoadRecentlyUsedSearch(object sender, EventArgs e)
+        {
+            //if a search is already running, prompt to cancel.
+            Boolean SearchInProgress = SearchIsActive();
+            if (SearchInProgress)
+            {
+                if(DialogResult.Yes == MessageBox.Show("Cancel the current search?", "Cancel", MessageBoxButtons.YesNo))
+                {
+                    CancelSearch();
+                    SearchInProgress = false;
+                }
+                else
+                {
+                    SearchInProgress = true;
+                }
+            }
+
+            if (!SearchInProgress)
+            {
+                string s_NotFoundMsg = "File not found." + Environment.NewLine + "Remove from the list?"; 
+                string filename = (sender as ToolStripMenuItem).Text;
+                int idxOfFileName = -1;
+                for (int i = 0; i < recentSearchesToolStripMenuItem.DropDownItems.Count; ++i)
+                {
+                    if (filename == recentSearchesToolStripMenuItem.DropDownItems[i].Text)
+                    {
+                        idxOfFileName = i;
+                    }
+                }
+
+                if (System.IO.File.Exists(filename))
+                {
+                    LoadSavedSearch(filename);
+                }
+                else
+                {
+                    if (DialogResult.Yes == MessageBox.Show(s_NotFoundMsg, "Error", MessageBoxButtons.YesNo))
+                    {
+                        if (-1 < idxOfFileName)
+                        {
+                            recentSearchesToolStripMenuItem.DropDownItems.RemoveAt(idxOfFileName);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void cboSearchFolders_DropDown(object sender, EventArgs e)
+        {
+            Util.RemoveEmptyEntriesFromCombo(ref cboSearchFolders);
+        }
+
+        private void cbOnlyFiles_CheckedChanged(object sender, EventArgs e)
+        {
+            SetOnlyFilesVisibilites();
+        }
+
+        private void SetOnlyFilesVisibilites()
+        {
+            if (rtbSearchTerms.Enabled == cbOnlyFiles.Checked)
+            {
+                rtbSearchTerms.Enabled = !cbOnlyFiles.Checked;
+                rtbExcludes.Enabled = !cbOnlyFiles.Checked;
+            }
+        }
+
+        private void txbDynamicResize(object sender, EventArgs e)
+        {
+            int c_MinSize = 100;
+            int c_MaxSize = 300;
+            TextBox tmp = (sender as TextBox);
+
+            (sender as TextBox).Width = Math.Max(Math.Min(c_MaxSize, Util.GetPixelWidthOfFormattedText(tmp.Text,tmp.Font,tmp.Width)), c_MinSize);
+        }
+
+        private void lblCrippled_Click(object sender, EventArgs e)
+        {
+            BegForMoney();
+            SetPerformanceCrippling(!regInfo.PaidFor());
+        }
+
+        private void btnGenKey_Click(object sender, EventArgs e)
+        {
+            Registration r = new Registration();
+            string key = r.NewKey();
+            txbKeyToValidate.Text = key;
+        }
+
+        private void btnCheckKey_Click(object sender, EventArgs e)
+        {
+            Registration r = new Registration();
+            MessageBox.Show(r.ValidKey(txbKeyToValidate.Text).ToString());
+        }
+
+        private void cboSearchFolders_TextChanged(object sender, EventArgs e)
+        {
+            HighlightInvalidFolder();
+        }
+
+        private void richTextBox_TextChanged(object sender, EventArgs e)
+        {
+            ForceStandardFontOnRichTextBox((sender as RichTextBox));
+        }
+
+        private void ForceStandardFontOnRichTextBox(object rtb)
+        {
+            //they might copy & paste something from a formatted editor
+            //(i.e., a rich text email or ms word)
+            //in that case, strip away their formatting and make it look
+            //consistent with the rest of the UI in our little world
+            int prevSel = (rtb as RichTextBox).SelectionStart;
+            (rtb as RichTextBox).SelectAll();
+            (rtb as RichTextBox).SelectionFont = cboSearchFolders.Font;
+            (rtb as RichTextBox).SelectionColor = cboSearchFolders.ForeColor;
+            (rtb as RichTextBox).Select(prevSel, 0);
+        }
+
+        private void rtbSearchTerms_Leave(object sender, EventArgs e)
+        {
+            //it does not make sense to search for "nothing"
+            rtbSearchTerms.Lines = RemoveEmptyEntriesFromStringArray(rtbSearchTerms.Lines);
+        }
+
+        private void rtbExcludes_Leave(object sender, EventArgs e)
+        {
+            //it does not make sense to exclude "nothing"
+            rtbExcludes.Lines = RemoveEmptyEntriesFromStringArray(rtbExcludes.Lines);
+        }
+
+        private string[] RemoveEmptyEntriesFromStringArray(string[] strarry)
+        {
+            //copy the input array into a new one, skipping empty entries
+            try
+            {
+                int reslen = 0;
+                string[] result = new string[reslen];
+                foreach (string s in strarry)
+                {
+                    if (0 < s.Length)
+                    {
+                        Array.Resize(ref result, ++reslen);
+                        result[reslen - 1] = s;
+                    }
+                }
+                return result;
+            }
+            catch
+            {
+                //whoopsy.... just return the input array...
+                return strarry;
+            }
+        }
+
+        private void splitCont_MouseDown(object sender, MouseEventArgs e)
+        {
+            // This disables the normal move behavior
+            ((SplitContainer)sender).IsSplitterFixed = true;
+        }
+
+        private void splitCont_MouseUp(object sender, MouseEventArgs e)
+        {
+            // This allows the splitter to be moved normally again
+            ((SplitContainer)sender).IsSplitterFixed = false;
+        }
+
+        private void splitCont_MouseMove(object sender, MouseEventArgs e)
+        {
+            // Check to make sure the splitter won't be updated by the
+            // normal move behavior also
+            if (((SplitContainer)sender).IsSplitterFixed)
+            {
+                // Make sure that the button used to move the splitter
+                // is the left mouse button
+                if (e.Button.Equals(MouseButtons.Left))
+                {
+                    // Checks to see if the splitter is aligned Vertically
+                    if (((SplitContainer)sender).Orientation.Equals(Orientation.Vertical))
+                    {
+                        // Only move the splitter if the mouse is within
+                        // the appropriate bounds
+                        if (e.X > 0 && e.X < ((SplitContainer)sender).Width)
+                        {
+                            // Move the splitter & force a visual refresh
+                            ((SplitContainer)sender).SplitterDistance = e.X;
+                            ((SplitContainer)sender).Refresh();
+                        }
+                    }
+                    // If it isn't aligned vertically then it must be
+                    // horizontal
+                    else
+                    {
+                        // Only move the splitter if the mouse is within
+                        // the appropriate bounds
+                        if (e.Y > 0 && e.Y < ((SplitContainer)sender).Height)
+                        {
+                            // Move the splitter & force a visual refresh
+                            ((SplitContainer)sender).SplitterDistance = e.Y;
+                            ((SplitContainer)sender).Refresh();
+                        }
+                    }
+                }
+                // If a button other than left is pressed or no button
+                // at all
+                else
+                {
+                    // This allows the splitter to be moved normally again
+                    ((SplitContainer)sender).IsSplitterFixed = false;
+                }
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Registration rs = new Registration();
+            for (int i = 0; i < 100000; ++i)
+            {
+                string testkey = rs.NewKey();
+                if (!rs.ValidKey(testkey))
+                {
+                    MessageBox.Show("Failed on '" + testkey + "'");
+                }
+            }
+            MessageBox.Show("success");
+        }
+
+        private void SetSearchTermsWidth()
+        {
+            rtbSearchTerms.Width = SizeOfSearchTermsBox(ref rtbSearchTerms, lblSearchTerms.Width, tpgBasic.Width - rtbSearchTerms.Left, c_buffer);
+        }
+
+        private void rtbSearchTerms_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            SetSearchTermsWidth();
+        }
     }
 }

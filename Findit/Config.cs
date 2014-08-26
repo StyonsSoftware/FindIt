@@ -18,7 +18,7 @@ namespace Findit
             InitializeComponent();
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void btnSave_Click(object sender, EventArgs e)
         {
             SaveConfigOptions();
             Close();
@@ -27,6 +27,7 @@ namespace Findit
         private void SaveConfigOptions()
         {
             gp.CustomEditorExe = txbCustomEditorExe.Text;
+            gp.RunSearchesAfterLoad = cbRunSearchAfterLoad.Checked;
             gp.SaveToRegistry();
         }
 
@@ -43,32 +44,35 @@ namespace Findit
         private void LoadCurrentPreferences()
         {
             txbCustomEditorExe.Text = gp.CustomEditorExe;
+            cbRunSearchAfterLoad.Checked = gp.RunSearchesAfterLoad;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnBrowse_Click(object sender, EventArgs e)
         {
-            FolderClick(ref txbCustomEditorExe);
+            FolderClick(ref txbCustomEditorExe, "exe files (*.exe)|*.exe|All files (*.*)|*.*");
         }
 
-        private void FolderClick(ref TextBox DisplayBox)
-        {
+        private void FolderClick(ref TextBox DisplayBox, string filter)
+        {           
             //show a folder browser dialog & tie it to whatever textbox they gave us
-            var dlg = new OpenFileDialog();
-            dlg.Filter = "exe files (*.exe)|*.exe|All files (*.*)|*.*";
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = filter;
             if (System.IO.File.Exists(DisplayBox.Text))
             {
+                dlg.InitialDirectory = System.IO.Path.GetDirectoryName(DisplayBox.Text);
                 dlg.FileName = DisplayBox.Text;
             }
             else
             {
                 dlg.FileName = "c:\\";
             }
+            dlg.FilterIndex = 1;
+            dlg.RestoreDirectory = true;
 
             if (dlg.ShowDialog() == DialogResult.OK)
             {
                 DisplayBox.Text = dlg.FileName;
             }
-
         }
 
         private void txbCustomEditorExe_TextChanged(object sender, EventArgs e)

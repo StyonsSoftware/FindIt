@@ -1,7 +1,11 @@
 ﻿/*
-This class represents the various options that we can define on a BBEC build.
-It is mostly a big collection of public properties, to hold folder names
-and other machine-specific information.
+This class represents the various options that we can define for the UI.
+This is distinct from the search parameters themselves.
+
+For example, the list of "recent searches" is an artifact of the application, not any
+particular search.
+ 
+It is mostly a collection of public properties, to hold folder names and boolean values.
 
 It also includes functionality to save the preferences *to* the registry, and
 to load them back *from* the registry.
@@ -11,154 +15,33 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Win32;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Findit
 {
-    class GUIPreferences
+    [Serializable()]
+    public class GUIPreferences : SerializablePreferenceSaver
     {
-        private RegistryKey reg;
-        private string m_SearchFolder = "";
-        private string m_FileTypeFilter = "";
-        private string m_FileExcludeFilter = "";
-        private string m_CustomEditorExe = "";
-        private bool m_IncludeLineNosInOutput = false;
-        private bool m_IncludePerfStats = false;
-        private bool m_CaseSensitive = false;
-        private bool m_SearchSubfolders = true;
-        private string[] m_SearchTerms = { "" };
-        private string[] m_ExcludeTerms = { "" };
+        private string[] m_RecentSavedSearches = { "" };
         private string[] m_RecentSearchFolders = { "" };
+        private string m_CustomEditorExe = "";
+        private Boolean m_RunSearchesAfterLoad = false;
 
-        private const string c_RegKeyName = @"Software\BlackbaudUtility\FindIt";
-        private const string c_SearchFolder = "SearchFolder";
-        private const string c_FileTypeFilter = "FileTypeFilter";
-        private const string c_FileExcludeFilter = "FileExcludeFilter";
-        private const string c_CustomEditorExe = "CustomEditorExe";
-        private const string c_IncludeLineNosInOutput = "IncludeLineNosInOutput";
-        private const string c_IncludePerfStats = "IncludePerfStats";
-        private const string c_CaseSensitive = "CaseSensitive";
-        private const string c_SearchSubfolders = "SearchSubfolders";
-        private const string c_SearchTerms = "SearchTerms";
-        private const string c_ExcludeTerms = "ExcludeTerms";
+        private const string c_RecentSavedSearches = "RecentSavedSearches";
         private const string c_RecentSearchFolders = "RecentSearchFolders";
- 
-        public bool IncludeLineNosInOutput
-        {
-            get
-            {
-                return m_IncludeLineNosInOutput;
-            }
-            set
-            {
-                m_IncludeLineNosInOutput = value;
-            }
-        }
+        private const string c_CustomEditorExe = "CustomEditorExe";
+        private const string c_RunSearchesAfterLoad = "RunSearchesAfterLoad";
 
-        public bool IncludePerfStats
+        public string[] RecentSavedSearches
         {
             get
             {
-                return m_IncludePerfStats;
+                return m_RecentSavedSearches;
             }
             set
             {
-                m_IncludePerfStats = value;
-            }
-        }
-
-        public bool CaseSensitive
-        {
-            get
-            {
-                return m_CaseSensitive;
-            }
-            set
-            {
-                m_CaseSensitive = value;
-            }
-        }
-
-        public bool SearchSubfolders
-        {
-            get
-            {
-                return m_SearchSubfolders;
-            }
-            set
-            {
-                m_SearchSubfolders = value;
-            }
-        }
-
-        public string SearchFolder
-        {
-            get
-            {
-                return m_SearchFolder;
-            }
-            set
-            {
-                m_SearchFolder = value;
-            }
-        }
-
-        public string FileTypeFilter
-        {
-            get
-            {
-                return m_FileTypeFilter;
-            }
-            set
-            {
-                m_FileTypeFilter = value;
-            }
-        }
-
-        public string FileExcludeFilter
-        {
-            get
-            {
-                return m_FileExcludeFilter;
-            }
-            set
-            {
-                m_FileExcludeFilter = value;
-            }
-        }
-
-        public string CustomEditorExe
-        {
-            get
-            {
-                return m_CustomEditorExe;
-            }
-            set
-            {
-                m_CustomEditorExe = value;
-            }
-        }
-
-        public string[] SearchTerms
-        {
-            get
-            {
-                return m_SearchTerms;
-            }
-            set
-            {
-                m_SearchTerms = value;
-            }
-        }
-
-        public string[] ExcludeTerms
-        {
-            get
-            {
-                return m_ExcludeTerms;
-            }
-            set
-            {
-                m_ExcludeTerms = value;
+                m_RecentSavedSearches = value;
             }
         }
 
@@ -174,6 +57,30 @@ namespace Findit
             }
         }
 
+        public string CustomEditorExe
+        {
+            get
+            {
+                return m_CustomEditorExe;
+            }
+            set
+            {
+                m_CustomEditorExe = value;
+            }
+        }
+
+        public Boolean RunSearchesAfterLoad
+        {
+            get
+            {
+                return m_RunSearchesAfterLoad;
+            }
+            set
+            {
+                m_RunSearchesAfterLoad = value;
+            }
+        }
+
         public GUIPreferences()
         {
             reg = Registry.CurrentUser;
@@ -184,22 +91,28 @@ namespace Findit
 
         ~GUIPreferences()
         {
-            reg.Close();
+            if (reg != null)
+            {
+                reg.Close();
+            }
         }
 
-        public void SaveToRegistry()
+        public override void SaveToRegistry()
         {
-            reg.SetValue(c_SearchFolder, SearchFolder);
-            reg.SetValue(c_FileTypeFilter, FileTypeFilter);
-            reg.SetValue(c_FileExcludeFilter, FileExcludeFilter);
-            reg.SetValue(c_IncludeLineNosInOutput, IncludeLineNosInOutput.ToString());
-            reg.SetValue(c_IncludePerfStats, IncludePerfStats.ToString());
-            reg.SetValue(c_CaseSensitive, CaseSensitive.ToString());
-            reg.SetValue(c_SearchSubfolders, SearchSubfolders.ToString());
-            reg.SetValue(c_CustomEditorExe, CustomEditorExe);
-            SaveTerms(c_SearchTerms, ref m_SearchTerms);
-            SaveTerms(c_ExcludeTerms, ref m_ExcludeTerms);
+            SaveTerms(c_RecentSavedSearches, ref m_RecentSavedSearches);
             SaveTerms(c_RecentSearchFolders, ref m_RecentSearchFolders);
+            reg.SetValue(c_CustomEditorExe, CustomEditorExe);
+            reg.SetValue(c_RunSearchesAfterLoad, RunSearchesAfterLoad.ToString());
+        }
+
+        public static string DefaultCustomEditor()
+        {
+            return @"C:\windows\notepad.exe";
+        }
+
+        public static Boolean DefaultRunSearchesAfterLoad()
+        {
+            return false;
         }
 
         private void ClearTerms(string startswith)
@@ -241,19 +154,64 @@ namespace Findit
             return Result;
         }
 
-        public void LoadFromRegistry()
+        public override void LoadFromRegistry()
         {
-            SearchFolder = reg.GetValue(c_SearchFolder, @"C:\").ToString();
-            FileTypeFilter = reg.GetValue(c_FileTypeFilter, "*.*").ToString();
-            FileExcludeFilter = reg.GetValue(c_FileExcludeFilter, "*.*").ToString();
-            CustomEditorExe = reg.GetValue(c_CustomEditorExe, @"c:\windows\notepad.exe").ToString();
-            IncludeLineNosInOutput = (true.ToString() == (reg.GetValue(c_IncludeLineNosInOutput, false.ToString()).ToString()));
-            IncludePerfStats = (true.ToString() == (reg.GetValue(c_IncludePerfStats, false.ToString()).ToString()));
-            CaseSensitive = (true.ToString() == (reg.GetValue(c_CaseSensitive, false.ToString()).ToString()));
-            SearchSubfolders = (true.ToString() == (reg.GetValue(c_SearchSubfolders, true.ToString()).ToString()));
-            SearchTerms = LoadTerms(c_SearchTerms);
-            ExcludeTerms = LoadTerms(c_ExcludeTerms);
+            RecentSavedSearches = LoadTerms(c_RecentSavedSearches);
             RecentSearchFolders = LoadTerms(c_RecentSearchFolders);
+            CustomEditorExe = reg.GetValue(c_CustomEditorExe, DefaultCustomEditor()).ToString();
+            RunSearchesAfterLoad = (reg.GetValue(c_RunSearchesAfterLoad, DefaultRunSearchesAfterLoad().ToString()).ToString() == true.ToString());
         }
+
+        public override void GetObjectData(SerializationInfo info, StreamingContext ctxt)
+        {
+            info.AddValue("RecentSavedSearches",this.RecentSavedSearches);
+        }
+
+        public override void Owner(SerializationInfo info, StreamingContext ctxt)
+        {
+            this.RecentSavedSearches = (string[])info.GetValue("RecentSavedSearches",typeof(string[]));
+        }
+
+        public GUIPreferences(SerializationInfo info, StreamingContext ctxt)
+        {
+            this.RecentSavedSearches = SafeGetStrArry(ref info, "RecentSavedSearches", Util.EmptyStringArray());
+        }
+
+        private Boolean SafeGetBool(ref SerializationInfo info, string term, Boolean defaultValue)
+        {
+            try
+            {
+                return (Boolean)info.GetValue(term, typeof(Boolean));
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
+        private string SafeGetStr(ref SerializationInfo info, string term, string defaultValue)
+        {
+            try
+            {
+                return (string)info.GetValue(term, typeof(string));
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
+        private string[] SafeGetStrArry(ref SerializationInfo info, string term, string[] defaultValue)
+        {
+            try
+            {
+                return (string[])info.GetValue(term, typeof(string[]));
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
     }
 }

@@ -32,6 +32,8 @@
             uparms.SearchExtension = "*.xml";
             uparms.ShowPerfStats = true;
             uparms.AbsentStrings = {"File cannot contain this","Or this"};
+            uparms.Crippled = false;
+            uparms.OnlyFileNames = false;
 
             gp = new GrepTool.Grepper(uparms);
             searchThread = new Thread(gp.Search);
@@ -63,6 +65,8 @@ namespace GrepTool
             //it is a command-line app feature.
             public Boolean Remind;
             public string[] AbsentStrings;
+            public Boolean Crippled;
+            public Boolean OnlyFileNames;
         }
 
         //structure to hold performance data
@@ -156,6 +160,8 @@ namespace GrepTool
         private Boolean m_RecordExceptions = false;
 
         private const Int64 c_CacheSize = 50000;
+        private const int c_CrippleWaitMs = 100; //higher # here == more pain when they don't register
+        private TimeSpan OneMs = new TimeSpan(TimeSpan.TicksPerMillisecond);
 
         public SearchResult[] SearchResults = new SearchResult[c_CacheSize];
         public int SearchResultCount = 0;
@@ -250,6 +256,11 @@ namespace GrepTool
                     }
                 }
 
+                if (UserPrefs.OnlyFileNames)
+                {
+                    PerformanceStats.FilesSearched += folder.GetFiles().Length;
+                }
+
                 Array.Resize(ref FilesToSearch, idx);
 
                 foreach (System.IO.FileInfo currFile in FilesToSearch)
@@ -257,41 +268,60 @@ namespace GrepTool
                     Int64 MatchLine = -1;
                     Int64 UnmatchLine = -1;
 
-                    foreach (string s in UserPrefs.SearchStrings)
+                    if (UserPrefs.OnlyFileNames)
                     {
-                        MatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive);
-                        if (-1 == MatchLine)
-                        {
-                            break;
-                        }
-                    }
-
-                    foreach (string s in UserPrefs.AbsentStrings)
-                    {
-                        if (0 < s.Trim().Length)
-                        {
-                            UnmatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive);
-                            if (-1 != UnmatchLine)
-                            {
-                                StoreNotification("Found unwanted text " + s + " in file " + currFile.FullName);
-                                break;
-                            }
-                        }
-                    }
-                    
-                    PerformanceStats.FilesSearched++;
-                    PerformanceStats.ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
-                    if ((-1 < MatchLine) && (-1 == UnmatchLine))
-                    {
-                        string newline = currFile.FullName;
-                        SearchResults[SearchResultCount].LineNumber = MatchLine;
-                        SearchResults[SearchResultCount].FileName = newline;
+                        PerformanceStats.ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
+                        SearchResults[SearchResultCount].LineNumber = 0;
+                        SearchResults[SearchResultCount].FileName = currFile.FullName;
                         SearchResultCount++;
                         PerformanceStats.Matches++;
                     }
                     else
                     {
-                        StoreNotification("NOMATCH: " + currFile.FullName);
+                        foreach (string s in UserPrefs.SearchStrings)
+                        {
+                            MatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive);
+                            if (-1 == MatchLine)
+                            {
+                                break;
+                            }
+                        }
+
+                        foreach (string s in UserPrefs.AbsentStrings)
+                        {
+                            if (0 < s.Trim().Length)
+                            {
+                                UnmatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive);
+                                if (-1 != UnmatchLine)
+                                {
+                                    StoreNotification("Found unwanted text " + s + " in file " + currFile.FullName);
+                                    break;
+                                }
+                            }
+                        }
+
+                        PerformanceStats.FilesSearched++;
+                        PerformanceStats.ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
+                        if ((-1 < MatchLine) && (-1 == UnmatchLine))
+                        {
+                            string newline = currFile.FullName;
+                            SearchResults[SearchResultCount].LineNumber = MatchLine;
+                            SearchResults[SearchResultCount].FileName = newline;
+                            SearchResultCount++;
+                            PerformanceStats.Matches++;
+                        }
+                        else
+                        {
+                            StoreNotification("NOMATCH: " + currFile.FullName);
+                        }
+
+                        //force the search to run slowly when in 'crippled' mode.
+                        //this is to support the idea of a limited functionality
+                        //mode after a trial period has expired.
+                        if (UserPrefs.Crippled)
+                        {
+                            WaitWithoutSleeping(c_CrippleWaitMs);
+                        }
                     }
                 }
                 if (UserPrefs.Recurse)
@@ -308,7 +338,33 @@ namespace GrepTool
                     ".  The exception was: '" + e.Message + "'");
             }
         }
-        
+
+        private void WaitWithoutSleeping(int MsToWait)
+        {
+            //since Grepper might be running in a thread, we cannot just call
+            //Thread.Sleep, since that would indicate to a caller that we are
+            //no longer active.  instead this function will simulate the 'sleep' function
+            //by doing busywork until N milliseconds have passed
+
+            DateTime waituntil = DateTime.Now;
+
+            for (int i = 0; i < MsToWait; ++i)
+            {
+                waituntil = waituntil + OneMs;
+            }
+
+            while (DateTime.Now < waituntil)
+            {
+                //busywork
+                int x = 0;
+                ++x;
+                if (x > 100000)
+                {
+                    break;
+                }
+            }
+        }
+
         private Int64 IsTextInFile(string filename, string searchtext, Boolean casesensitive)
         {
             //look for a match in a file, quit as soon as you find it

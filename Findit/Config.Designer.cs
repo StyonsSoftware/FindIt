@@ -30,31 +30,54 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Config));
             this.panel1 = new System.Windows.Forms.Panel();
+            this.txbColor = new System.Windows.Forms.TextBox();
+            this.lblInvalidNotice = new System.Windows.Forms.Label();
             this.txbCustomEditorExe = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnBrowse = new System.Windows.Forms.Button();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.button3 = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.lblInvalidNotice = new System.Windows.Forms.Label();
-            this.txbColor = new System.Windows.Forms.TextBox();
+            this.cbRunSearchAfterLoad = new System.Windows.Forms.CheckBox();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.cbRunSearchAfterLoad);
             this.panel1.Controls.Add(this.txbColor);
             this.panel1.Controls.Add(this.lblInvalidNotice);
             this.panel1.Controls.Add(this.txbCustomEditorExe);
             this.panel1.Controls.Add(this.label1);
-            this.panel1.Controls.Add(this.button1);
+            this.panel1.Controls.Add(this.btnBrowse);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Margin = new System.Windows.Forms.Padding(4);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(696, 145);
+            this.panel1.Size = new System.Drawing.Size(696, 200);
             this.panel1.TabIndex = 0;
+            // 
+            // txbColor
+            // 
+            this.txbColor.Location = new System.Drawing.Point(650, 3);
+            this.txbColor.Name = "txbColor";
+            this.txbColor.Size = new System.Drawing.Size(43, 26);
+            this.txbColor.TabIndex = 14;
+            this.txbColor.Text = "color";
+            this.txbColor.Visible = false;
+            // 
+            // lblInvalidNotice
+            // 
+            this.lblInvalidNotice.AutoSize = true;
+            this.lblInvalidNotice.Font = new System.Drawing.Font("Calibri", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblInvalidNotice.ForeColor = System.Drawing.Color.Red;
+            this.lblInvalidNotice.Location = new System.Drawing.Point(114, 55);
+            this.lblInvalidNotice.Name = "lblInvalidNotice";
+            this.lblInvalidNotice.Size = new System.Drawing.Size(143, 18);
+            this.lblInvalidNotice.TabIndex = 13;
+            this.lblInvalidNotice.Text = "This file does not exist";
+            this.lblInvalidNotice.Visible = false;
             // 
             // txbCustomEditorExe
             // 
@@ -76,42 +99,42 @@
             this.label1.TabIndex = 1;
             this.label1.Text = "Custom editor";
             // 
-            // button1
+            // btnBrowse
             // 
-            this.button1.Location = new System.Drawing.Point(479, 25);
-            this.button1.Margin = new System.Windows.Forms.Padding(4);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(32, 26);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "...";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.btnBrowse.Location = new System.Drawing.Point(479, 25);
+            this.btnBrowse.Margin = new System.Windows.Forms.Padding(4);
+            this.btnBrowse.Name = "btnBrowse";
+            this.btnBrowse.Size = new System.Drawing.Size(32, 26);
+            this.btnBrowse.TabIndex = 0;
+            this.btnBrowse.Text = "...";
+            this.btnBrowse.UseVisualStyleBackColor = true;
+            this.btnBrowse.Click += new System.EventHandler(this.btnBrowse_Click);
             // 
             // panel2
             // 
-            this.panel2.Controls.Add(this.button3);
+            this.panel2.Controls.Add(this.btnSave);
             this.panel2.Controls.Add(this.btnCancel);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel2.Location = new System.Drawing.Point(0, 77);
+            this.panel2.Location = new System.Drawing.Point(0, 132);
             this.panel2.Margin = new System.Windows.Forms.Padding(4);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(696, 68);
             this.panel2.TabIndex = 1;
             // 
-            // button3
+            // btnSave
             // 
-            this.button3.Dock = System.Windows.Forms.DockStyle.Right;
-            this.button3.Image = ((System.Drawing.Image)(resources.GetObject("button3.Image")));
-            this.button3.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button3.Location = new System.Drawing.Point(556, 0);
-            this.button3.Margin = new System.Windows.Forms.Padding(4);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(140, 68);
-            this.button3.TabIndex = 1;
-            this.button3.Text = "Save";
-            this.button3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            this.btnSave.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btnSave.Image = ((System.Drawing.Image)(resources.GetObject("btnSave.Image")));
+            this.btnSave.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnSave.Location = new System.Drawing.Point(556, 0);
+            this.btnSave.Margin = new System.Windows.Forms.Padding(4);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(140, 68);
+            this.btnSave.TabIndex = 1;
+            this.btnSave.Text = "Save";
+            this.btnSave.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // btnCancel
             // 
@@ -128,32 +151,21 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
-            // lblInvalidNotice
+            // cbRunSearchAfterLoad
             // 
-            this.lblInvalidNotice.AutoSize = true;
-            this.lblInvalidNotice.Font = new System.Drawing.Font("Calibri", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblInvalidNotice.ForeColor = System.Drawing.Color.Red;
-            this.lblInvalidNotice.Location = new System.Drawing.Point(114, 55);
-            this.lblInvalidNotice.Name = "lblInvalidNotice";
-            this.lblInvalidNotice.Size = new System.Drawing.Size(143, 18);
-            this.lblInvalidNotice.TabIndex = 13;
-            this.lblInvalidNotice.Text = "This file does not exist";
-            this.lblInvalidNotice.Visible = false;
-            // 
-            // txbColor
-            // 
-            this.txbColor.Location = new System.Drawing.Point(650, 3);
-            this.txbColor.Name = "txbColor";
-            this.txbColor.Size = new System.Drawing.Size(43, 26);
-            this.txbColor.TabIndex = 14;
-            this.txbColor.Text = "color";
-            this.txbColor.Visible = false;
+            this.cbRunSearchAfterLoad.AutoSize = true;
+            this.cbRunSearchAfterLoad.Location = new System.Drawing.Point(117, 85);
+            this.cbRunSearchAfterLoad.Name = "cbRunSearchAfterLoad";
+            this.cbRunSearchAfterLoad.Size = new System.Drawing.Size(264, 22);
+            this.cbRunSearchAfterLoad.TabIndex = 15;
+            this.cbRunSearchAfterLoad.Text = "Run saved searches after loading them";
+            this.cbRunSearchAfterLoad.UseVisualStyleBackColor = true;
             // 
             // Config
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(696, 145);
+            this.ClientSize = new System.Drawing.Size(696, 200);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
             this.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -174,11 +186,12 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.TextBox txbCustomEditorExe;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnBrowse;
         private System.Windows.Forms.Panel panel2;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Label lblInvalidNotice;
         private System.Windows.Forms.TextBox txbColor;
+        private System.Windows.Forms.CheckBox cbRunSearchAfterLoad;
     }
 }
