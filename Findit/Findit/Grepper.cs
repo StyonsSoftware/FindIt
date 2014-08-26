@@ -384,11 +384,6 @@ namespace GrepTool
                         //don't try to check binary files, and don't check for binariness > 1 time
                         if (currentLine != null)
                         {
-                            if (!casesensitive)
-                            {
-                                currentLine = currentLine.ToUpper();
-                                searchtext = searchtext.ToUpper();
-                            }
                             PerformanceStats.LinesSearched++;
 
                             currlinenum++;
@@ -399,8 +394,7 @@ namespace GrepTool
                                 BinaryChecked = true;
                                 return -1;
                             }
-
-                            if (-1 < currentLine.IndexOf(searchtext))
+                            if (-1 < currentLine.IndexOf(searchtext, (casesensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase)))
                             {
                                 return currlinenum;
                             }
