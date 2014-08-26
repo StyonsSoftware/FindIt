@@ -155,9 +155,19 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Binoculars.ico" />
+    <Content Include="img\big_clipboard.png" />
+    <Content Include="img\Binoculars.ico" />
     <Content Include="img\buy_now.png" />
+    <Content Include="img\Cancel.png" />
+    <Content Include="img\green_check.png" />
     <Content Include="img\key.png" />
+    <Content Include="img\Left_black_delete_arrow.png" />
     <Content Include="img\little_cancel.png" />
+    <Content Include="img\Preview.png" />
+    <Content Include="img\select_row.png" />
+    <Content Include="img\tiny_edit.png" />
+    <Content Include="img\tiny_folder.png" />
+    <Content Include="img\tiny_spiral_notebook.png" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
