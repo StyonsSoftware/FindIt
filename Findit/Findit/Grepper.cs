@@ -441,7 +441,7 @@ namespace GrepTool
                                 BinaryChecked = true;
                                 return -1;
                             }
-                            else if (includeOffice)
+                            else if (includeOffice && IsOfficeDocument(filename))
                             {
                                 return IsTextInOfficeDocument(filename, searchtext, casesensitive, includeOffice);
                             }
@@ -471,6 +471,36 @@ namespace GrepTool
                 StoreException("Exception in file '" + filename + "': '" + e.Message + "'");
                 return -1;
             }
+        }
+
+        private bool IsOfficeDocument(string filename)
+        {
+            //pretty low-tech here
+            if (System.IO.File.Exists(filename))
+            {
+                string[] dots = filename.Split('.');
+                if (0 < dots.Length)
+                {
+                    string fileextension = dots[dots.Length - 1].ToUpper();
+                    string[] officeextensions = { "DOCX", "XLSX", "PPTX", "DOC", "XLS", "PPT" };
+                    foreach (string s in officeextensions)
+                    {
+                        if (fileextension == s)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+            return false;
         }
 
         private Boolean IsBinary(string line)

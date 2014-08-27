@@ -200,5 +200,35 @@ namespace Findit
             return new string[0];
         }
 
+        public static bool IsOfficeDocument(string filename)
+        {
+            //pretty low-tech here
+            if (System.IO.File.Exists(filename))
+            {
+                string[] dots = filename.Split('.');
+                if (0 < dots.Length)
+                {
+                    string fileextension = dots[dots.Length - 1].ToUpper();
+                    string[] officeextensions = { "DOCX", "XLSX", "PPTX", "DOC", "XLS", "PPT" };
+                    foreach (string s in officeextensions)
+                    {
+                        if (fileextension == s)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+            return false;
+        }
+
     }
 }
