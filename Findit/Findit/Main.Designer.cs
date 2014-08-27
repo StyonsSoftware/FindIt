@@ -58,6 +58,7 @@
             this.lblInvalidNotice = new System.Windows.Forms.Label();
             this.lblFolder = new System.Windows.Forms.Label();
             this.tpgAdvanced = new System.Windows.Forms.TabPage();
+            this.cbIncludeOffice = new System.Windows.Forms.CheckBox();
             this.cbOnlyFiles = new System.Windows.Forms.CheckBox();
             this.lblExcludes = new System.Windows.Forms.Label();
             this.lblFileExclude = new System.Windows.Forms.Label();
@@ -186,7 +187,7 @@
             // txbFileExclude
             // 
             this.txbFileExclude.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txbFileExclude.Location = new System.Drawing.Point(10, 44);
+            this.txbFileExclude.Location = new System.Drawing.Point(10, 25);
             this.txbFileExclude.Margin = new System.Windows.Forms.Padding(4);
             this.txbFileExclude.Name = "txbFileExclude";
             this.txbFileExclude.Size = new System.Drawing.Size(113, 26);
@@ -200,7 +201,7 @@
             this.cbIncludeSubfolders.Checked = true;
             this.cbIncludeSubfolders.CheckState = System.Windows.Forms.CheckState.Checked;
             this.cbIncludeSubfolders.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbIncludeSubfolders.Location = new System.Drawing.Point(498, 133);
+            this.cbIncludeSubfolders.Location = new System.Drawing.Point(498, 118);
             this.cbIncludeSubfolders.Name = "cbIncludeSubfolders";
             this.cbIncludeSubfolders.Size = new System.Drawing.Size(142, 22);
             this.cbIncludeSubfolders.TabIndex = 22;
@@ -213,7 +214,7 @@
             // 
             this.cbPerfStats.AutoSize = true;
             this.cbPerfStats.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbPerfStats.Location = new System.Drawing.Point(499, 104);
+            this.cbPerfStats.Location = new System.Drawing.Point(499, 89);
             this.cbPerfStats.Margin = new System.Windows.Forms.Padding(4);
             this.cbPerfStats.Name = "cbPerfStats";
             this.cbPerfStats.Size = new System.Drawing.Size(271, 22);
@@ -226,7 +227,7 @@
             // 
             this.cbCaseSensitive.AutoSize = true;
             this.cbCaseSensitive.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbCaseSensitive.Location = new System.Drawing.Point(499, 74);
+            this.cbCaseSensitive.Location = new System.Drawing.Point(499, 59);
             this.cbCaseSensitive.Margin = new System.Windows.Forms.Padding(4);
             this.cbCaseSensitive.Name = "cbCaseSensitive";
             this.cbCaseSensitive.Size = new System.Drawing.Size(114, 22);
@@ -239,7 +240,7 @@
             // 
             this.cbLineNos.AutoSize = true;
             this.cbLineNos.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbLineNos.Location = new System.Drawing.Point(499, 44);
+            this.cbLineNos.Location = new System.Drawing.Point(499, 29);
             this.cbLineNos.Margin = new System.Windows.Forms.Padding(4);
             this.cbLineNos.Name = "cbLineNos";
             this.cbLineNos.Size = new System.Drawing.Size(218, 22);
@@ -252,10 +253,10 @@
             // rtbExcludes
             // 
             this.rtbExcludes.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.rtbExcludes.Location = new System.Drawing.Point(198, 44);
+            this.rtbExcludes.Location = new System.Drawing.Point(198, 25);
             this.rtbExcludes.Margin = new System.Windows.Forms.Padding(4);
             this.rtbExcludes.Name = "rtbExcludes";
-            this.rtbExcludes.Size = new System.Drawing.Size(293, 110);
+            this.rtbExcludes.Size = new System.Drawing.Size(293, 143);
             this.rtbExcludes.TabIndex = 17;
             this.rtbExcludes.Text = "";
             this.toolTip1.SetToolTip(this.rtbExcludes, "Separate multiple terms with the ENTER key");
@@ -450,6 +451,7 @@
             // tpgAdvanced
             // 
             this.tpgAdvanced.BackColor = System.Drawing.SystemColors.Control;
+            this.tpgAdvanced.Controls.Add(this.cbIncludeOffice);
             this.tpgAdvanced.Controls.Add(this.cbOnlyFiles);
             this.tpgAdvanced.Controls.Add(this.lblExcludes);
             this.tpgAdvanced.Controls.Add(this.txbFileExclude);
@@ -468,11 +470,22 @@
             this.tpgAdvanced.TabIndex = 1;
             this.tpgAdvanced.Text = "Advanced options";
             // 
+            // cbIncludeOffice
+            // 
+            this.cbIncludeOffice.AutoSize = true;
+            this.cbIncludeOffice.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbIncludeOffice.Location = new System.Drawing.Point(498, 146);
+            this.cbIncludeOffice.Name = "cbIncludeOffice";
+            this.cbIncludeOffice.Size = new System.Drawing.Size(206, 22);
+            this.cbIncludeOffice.TabIndex = 27;
+            this.cbIncludeOffice.Text = "Include MS Office documents";
+            this.cbIncludeOffice.UseVisualStyleBackColor = true;
+            // 
             // cbOnlyFiles
             // 
             this.cbOnlyFiles.AutoSize = true;
             this.cbOnlyFiles.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbOnlyFiles.Location = new System.Drawing.Point(10, 77);
+            this.cbOnlyFiles.Location = new System.Drawing.Point(10, 58);
             this.cbOnlyFiles.Name = "cbOnlyFiles";
             this.cbOnlyFiles.Size = new System.Drawing.Size(187, 22);
             this.cbOnlyFiles.TabIndex = 26;
@@ -483,7 +496,7 @@
             // 
             this.lblExcludes.AutoSize = true;
             this.lblExcludes.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblExcludes.Location = new System.Drawing.Point(195, 22);
+            this.lblExcludes.Location = new System.Drawing.Point(195, 3);
             this.lblExcludes.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblExcludes.Name = "lblExcludes";
             this.lblExcludes.Size = new System.Drawing.Size(296, 18);
@@ -494,7 +507,7 @@
             // 
             this.lblFileExclude.AutoSize = true;
             this.lblFileExclude.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblFileExclude.Location = new System.Drawing.Point(7, 22);
+            this.lblFileExclude.Location = new System.Drawing.Point(7, 3);
             this.lblFileExclude.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblFileExclude.Name = "lblFileExclude";
             this.lblFileExclude.Size = new System.Drawing.Size(116, 18);
@@ -886,6 +899,7 @@
         private System.Windows.Forms.TextBox txbKeyToValidate;
         private System.Windows.Forms.Button btnCheckKey;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.CheckBox cbIncludeOffice;
 
     }
 }

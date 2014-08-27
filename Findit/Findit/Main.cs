@@ -145,6 +145,7 @@ namespace Findit
             sp.IncludePerfStats = cbPerfStats.Checked;
             sp.SearchTerms = rtbSearchTerms.Lines;
             sp.ExcludeTerms = rtbExcludes.Lines;
+            sp.IncludeOffice = cbIncludeOffice.Checked;
             return sp;
         }
 
@@ -195,6 +196,7 @@ namespace Findit
             rtbSearchTerms.Lines = sp.SearchTerms;
             rtbExcludes.Lines = sp.ExcludeTerms;
             cboSearchFolders.Text = sp.SearchFolder;
+            cbIncludeOffice.Checked = sp.IncludeOffice;
         }
 
         private void UIFromGuiPreferences(GUIPreferences gp)
@@ -229,6 +231,7 @@ namespace Findit
             uparms.AbsentStrings = rtbExcludes.Lines;
             uparms.Crippled = g_Crippled;
             uparms.OnlyFileNames = cbOnlyFiles.Checked;
+            uparms.IncludeOffice = cbIncludeOffice.Checked;
             
             gp = new GrepTool.Grepper(uparms);
             searchThread = new Thread(gp.Search);
@@ -307,6 +310,7 @@ namespace Findit
             cbLineNos.Enabled = !SearchIsInProgress;
             cbIncludeSubfolders.Enabled = !SearchIsInProgress;
             cbCaseSensitive.Enabled = !SearchIsInProgress;
+            cbIncludeOffice.Enabled = !SearchIsInProgress;
             rtbSearchTerms.Enabled = !SearchIsInProgress;
             rtbExcludes.Enabled = !SearchIsInProgress;
             txbFileType.Enabled = !SearchIsInProgress;
@@ -520,6 +524,60 @@ namespace Findit
             }
         }
 
+        private bool IsOfficeDocument(string filename)
+        {
+            //pretty low-tech here
+            if (System.IO.File.Exists(filename))
+            {
+                string[] dots = filename.Split('.');
+                if (0 < dots.Length)
+                {
+                    string fileextension = dots[dots.Length - 1].ToUpper();
+                    string[] officeextensions = {"DOCX","XLSX","PPTX","DOC","XLS","PPT"};
+                    foreach(string s in officeextensions){
+                        if(fileextension==s)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+            return false;
+        }
+
+        private string OfficeDocumentContents(string filename)
+        {
+            System.IO.TextReader reader = new EPocalipse.IFilter.FilterReader(filename);
+            try
+            {
+                return reader.ReadToEnd();
+            }
+            finally
+            {
+                reader.Close();
+                reader.Dispose();
+            }
+        }
+
+        private void PreviewTextFromOfficeDocument(ref RichTextBox rtb, string documentContents, Int64 StartPoint, Int64 EndPoint)
+        {
+            StartPoint = Math.Max(StartPoint, 0);
+            string[] documentLines = documentContents.Split('\n');
+            EndPoint = Math.Min(EndPoint, documentLines.Length);
+            for(Int64 i=StartPoint;i<EndPoint;++i)
+            {
+                rtb.AppendText(documentLines[i] + Environment.NewLine);
+            }
+        }
+
         private void RefreshExcerptPane(string filename, Int64 linenumber, ref RichTextBox rtb, string[] highlightwords)
         {
             //Display an excerpt of the selected file, centered on the specified line number
@@ -537,11 +595,19 @@ namespace Findit
                 if((currentLine == null) || (-1 < currentLine.IndexOf("\0\0\0\0\0\0\0")))
                 {
                     rtb.Clear();
-                    System.IO.FileInfo finfo = new System.IO.FileInfo(filename);
-                    System.Diagnostics.FileVersionInfo myFileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(filename);
-                    rtb.AppendText("This is a binary file.  Preview is not available.");
-                    rtb.AppendText(Environment.NewLine + "File size (in MB): " + Math.Round(finfo.Length / 1048576.0,4).ToString());
-                    rtb.AppendText(Environment.NewLine + "File version     : " + myFileVersionInfo.FileVersion);
+                    string officeDocContents = OfficeDocumentContents(filename);
+                    if (0 < officeDocContents.Length)
+                    {
+                        PreviewTextFromOfficeDocument(ref rtb, officeDocContents, StartPoint, EndPoint);
+                    }
+                    else
+                    {
+                        System.IO.FileInfo finfo = new System.IO.FileInfo(filename);
+                        System.Diagnostics.FileVersionInfo myFileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(filename);
+                        rtb.AppendText("This is a binary file.  Preview is not available.");
+                        rtb.AppendText(Environment.NewLine + "File size (in MB): " + Math.Round(finfo.Length / 1048576.0, 4).ToString());
+                        rtb.AppendText(Environment.NewLine + "File version     : " + myFileVersionInfo.FileVersion);
+                    }
                     break;
                 }
                 if ((currentLine != null) && (LastReadLine > StartPoint) && (LastReadLine < EndPoint))
@@ -589,7 +655,15 @@ namespace Findit
 
         private void lbResults_DoubleClick(object sender, EventArgs e)
         {
-            Util.OpenFileInCustomEditor(SelectedResultsFile(),CustomEditorExeName());
+            string selectedFile = SelectedResultsFile();
+            if (IsOfficeDocument(selectedFile))
+            {
+                Util.OpenFile(selectedFile, String.Empty);
+            }
+            else
+            {
+                Util.OpenFileInCustomEditor(selectedFile, CustomEditorExeName());
+            }
         }
 
         private void btnTogglePreview_Click(object sender, EventArgs e)
@@ -642,6 +716,8 @@ namespace Findit
                     (cbLineNos.Checked != SearchParameters.DefaultIncludeLineNosState())
                     ||
                     (cbPerfStats.Checked != SearchParameters.DefaultIncludePerfStatsState())
+                    ||
+                    (cbIncludeOffice.Checked != SearchParameters.DefaultIncludeOfficeState())
                    );
         }
 
@@ -656,6 +732,7 @@ namespace Findit
             txbFileType.Text = SearchParameters.DefaultFileTypeFilter();
             txbFileExclude.Text = SearchParameters.DefaultExcludeFilter();
             cbCaseSensitive.Checked = SearchParameters.DefaultCaseSensitiveState();
+            cbIncludeOffice.Checked = SearchParameters.DefaultIncludeOfficeState();
             cbIncludeSubfolders.Checked = SearchParameters.DefaultIncludeSubfoldersState();
             cbOnlyFiles.Checked = SearchParameters.DefaultOnlyFilesState();
             cbLineNos.Checked = SearchParameters.DefaultIncludeLineNosState();
@@ -736,7 +813,7 @@ namespace Findit
         {
             try
             {
-                Util.OpenFile(lbResults.Items[lbResults.SelectedIndex].ToString().Trim(),"");
+                Util.OpenFile(lbResults.Items[lbResults.SelectedIndex].ToString().Trim(),String.Empty);
             }
             catch
             {

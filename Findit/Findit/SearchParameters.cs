@@ -26,6 +26,7 @@ namespace Findit
         private bool m_CaseSensitive = false;
         private bool m_SearchSubfolders = true;
         private bool m_OnlySearchFileNames = false;
+        private bool m_IncludeOffice = false;
         private string[] m_SearchTerms = { "" };
         private string[] m_ExcludeTerms = { "" };
 
@@ -37,6 +38,7 @@ namespace Findit
         private const string c_CaseSensitive = "CaseSensitive";
         private const string c_SearchSubfolders = "SearchSubfolders";
         private const string c_OnlySearchFileNames = "OnlySearchFileNames";
+        private const string c_IncludeOffice = "IncludeOffice";
         private const string c_SearchTerms = "SearchTerms";
         private const string c_ExcludeTerms = "ExcludeTerms";
  
@@ -74,6 +76,12 @@ namespace Findit
             {
                 m_CaseSensitive = value;
             }
+        }
+
+        public bool IncludeOffice
+        {
+            get { return m_IncludeOffice; }
+            set { m_IncludeOffice = value; }
         }
 
         public bool SearchSubfolders
@@ -186,6 +194,7 @@ namespace Findit
             reg.SetValue(c_CaseSensitive, CaseSensitive.ToString());
             reg.SetValue(c_SearchSubfolders, SearchSubfolders.ToString());
             reg.SetValue(c_OnlySearchFileNames, OnlySearchFileNames.ToString());
+            reg.SetValue(c_IncludeOffice, IncludeOffice.ToString());
             SaveTerms(c_SearchTerms, ref m_SearchTerms);
             SaveTerms(c_ExcludeTerms, ref m_ExcludeTerms);
         }
@@ -258,6 +267,9 @@ namespace Findit
             return false;
         }
 
+        public static Boolean DefaultIncludeOfficeState()
+        { return false; }
+
         public static string[] DefaultExcludeList()
         {
             return Util.EmptyStringArray();
@@ -288,6 +300,7 @@ namespace Findit
             CaseSensitive = (true.ToString() == (reg.GetValue(c_CaseSensitive, DefaultCaseSensitiveState().ToString()).ToString()));
             SearchSubfolders = (true.ToString() == (reg.GetValue(c_SearchSubfolders, DefaultIncludeSubfoldersState().ToString()).ToString()));
             OnlySearchFileNames = (true.ToString() == (reg.GetValue(c_OnlySearchFileNames,DefaultOnlyFilesState().ToString()).ToString()));
+            IncludeOffice = (true.ToString() == (reg.GetValue(c_IncludeOffice, DefaultIncludeOfficeState().ToString()).ToString()));
             SearchTerms = LoadTerms(c_SearchTerms);
             ExcludeTerms = LoadTerms(c_ExcludeTerms);
         }

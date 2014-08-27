@@ -67,6 +67,7 @@ namespace GrepTool
             public string[] AbsentStrings;
             public Boolean Crippled;
             public Boolean OnlyFileNames;
+            public Boolean IncludeOffice;
         }
 
         //structure to hold performance data
@@ -280,7 +281,7 @@ namespace GrepTool
                     {
                         foreach (string s in UserPrefs.SearchStrings)
                         {
-                            MatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive);
+                            MatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive, UserPrefs.IncludeOffice);
                             if (-1 == MatchLine)
                             {
                                 break;
@@ -291,7 +292,7 @@ namespace GrepTool
                         {
                             if (0 < s.Trim().Length)
                             {
-                                UnmatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive);
+                                UnmatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive, UserPrefs.IncludeOffice);
                                 if (-1 != UnmatchLine)
                                 {
                                     StoreNotification("Found unwanted text " + s + " in file " + currFile.FullName);
@@ -365,7 +366,53 @@ namespace GrepTool
             }
         }
 
-        private Int64 IsTextInFile(string filename, string searchtext, Boolean casesensitive)
+        private Int64 IsTextInOfficeDocument(string filename, string searchtext, Boolean casesensitive, Boolean includeOffice)
+        {
+            //look for a match in a file, quit as soon as you find it
+            try
+            {
+                Int64 currlinenum = 0;
+                StoreNotification("Searching file '" + filename + "'");
+                System.IO.TextReader reader = new EPocalipse.IFilter.FilterReader(filename);
+                string[] completeText = reader.ReadToEnd().Split('\n');
+                try
+                {
+                    if (0 < completeText.Length)
+                    {
+                        for (int i = 0; i < completeText.Length; ++i)
+                        {
+                            string currentLine = completeText[i];
+                            PerformanceStats.LinesSearched++;
+                            currlinenum++;
+                            if (-1 < currentLine.IndexOf(searchtext, (casesensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase)))
+                            {
+                                return currlinenum;
+                            }
+                        }
+                    }
+                    return -1;
+                }
+                finally
+                {
+                    reader.Close();
+                    reader.Dispose();
+                }
+            }
+            catch (System.IO.IOException)
+            {
+                //"File in use by another process" exception
+                StoreException("'" + filename + "' is being used by another process.");
+                return -1;
+            }
+            catch (Exception e)
+            {
+                //all other exceptions
+                StoreException("Exception in file '" + filename + "': '" + e.Message + "'");
+                return -1;
+            }
+        }
+
+        private Int64 IsTextInFile(string filename, string searchtext, Boolean casesensitive, Boolean includeOffice)
         {
             //look for a match in a file, quit as soon as you find it
             try
@@ -387,12 +434,16 @@ namespace GrepTool
                             PerformanceStats.LinesSearched++;
 
                             currlinenum++;
-                            if (!BinaryChecked && IsBinary(currentLine))
+                            if (!includeOffice && !BinaryChecked && IsBinary(currentLine))
                             {
                                 StoreNotification("Skipped binary file " + filename);
                                 PerformanceStats.Skipped++;
                                 BinaryChecked = true;
                                 return -1;
+                            }
+                            else if (includeOffice)
+                            {
+                                return IsTextInOfficeDocument(filename, searchtext, casesensitive, includeOffice);
                             }
                             if (-1 < currentLine.IndexOf(searchtext, (casesensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase)))
                             {
