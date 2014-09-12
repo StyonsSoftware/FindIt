@@ -92,7 +92,6 @@
     </Compile>
     <Compile Include="FileFinder.cs" />
     <Compile Include="Grepper.cs" />
-    <Compile Include="Grepper2.cs" />
     <Compile Include="GUIPreferences.cs" />
     <Compile Include="SearchParameters.cs" />
     <Compile Include="Main.cs">
