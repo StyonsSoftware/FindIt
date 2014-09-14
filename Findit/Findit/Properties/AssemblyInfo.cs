@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("A simple utility to search for text, with some useful options to help you find what you really need.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("jstyons@gmail.com")]
-[assembly: AssemblyProduct("FoundIt")]
+[assembly: AssemblyProduct("FindIt")]
 [assembly: AssemblyCopyright("Joseph Styons")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
