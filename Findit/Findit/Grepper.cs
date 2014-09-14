@@ -194,21 +194,33 @@ namespace Findit
                             if (!Globals.processorQueues[_threadIndex].filesToSearch[i].HasBeenSearched)
                             {
                                 //ok, this file has not been searched.  search it, if possible.
-                                Int64 lineNumber = -1;
+                                Int64 matchingLineNumber = -1;
+                                Int64 unmatchingLineNumber = -1;
+
                                 Globals.statBoard.LastSearchedFolder = Globals.processorQueues[_threadIndex].filesToSearch[i].file.DirectoryName;
                                 foreach (string term in _userPrefs.SearchStrings)
                                 {
-                                    lineNumber = IsTextInFile(currentFilename, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
-                                    Globals.processorQueues[_threadIndex].filesToSearch[i].MatchLineNumber = lineNumber;
+                                    matchingLineNumber = IsTextInFile(currentFilename, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                                    Globals.processorQueues[_threadIndex].filesToSearch[i].MatchLineNumber = matchingLineNumber;
                                     Globals.processorQueues[_threadIndex].filesToSearch[i].HasBeenSearched = true;
-                                    if (-1 == lineNumber)
+                                    if (-1 == matchingLineNumber)
                                     {
                                         break;  //both terms are required.  if one is missing, we can quit.
                                     }
                                 }
-                                if (-1 < lineNumber)
+
+                                //now make sure we dont have any unwanted terms
+                                foreach(string term in _userPrefs.AbsentStrings)
                                 {
-                                    RecordPositiveMatch(currentFilename, lineNumber);
+                                    unmatchingLineNumber = IsTextInFile(currentFilename, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                                    if (-1 != unmatchingLineNumber)
+                                    {
+                                        break;  //the presence of any of these terms is enough to fail.
+                                    }
+                                }
+                                if ((-1 < matchingLineNumber) && (-1 == unmatchingLineNumber))
+                                {
+                                    RecordPositiveMatch(currentFilename, matchingLineNumber);
                                 }
                                 else
                                 {
@@ -233,7 +245,9 @@ namespace Findit
                 {
                     if (!qf.HasBeenSearched)
                     {
-                        Int64 lineNumber = -1;
+                        Int64 matchingLineNumber = -1;
+                        Int64 unmatchingLineNumber = -1;
+
                         if (_userPrefs.OnlyFileNames)
                         {
                             RecordPositiveMatch(qf.file.FullName, 0);
@@ -242,17 +256,27 @@ namespace Findit
                         }
                         foreach (string term in _userPrefs.SearchStrings)
                         {
-                            lineNumber = IsTextInFile(qf.file.FullName, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
-                            qf.MatchLineNumber = lineNumber;
+                            matchingLineNumber = IsTextInFile(qf.file.FullName, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                            qf.MatchLineNumber = matchingLineNumber;
                             qf.HasBeenSearched = true;
-                            if (-1 == lineNumber)
+                            if (-1 == matchingLineNumber)
                             {
                                 break;
                             }
                         }
-                        if (-1 < lineNumber)
+
+                        //now make sure we dont have any unwanted terms
+                        foreach (string term in _userPrefs.AbsentStrings)
                         {
-                            RecordPositiveMatch(qf.file.FullName,lineNumber);
+                            unmatchingLineNumber = IsTextInFile(qf.file.FullName, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                            if (-1 != unmatchingLineNumber)
+                            {
+                                break;  //the presence of any of these terms is enough to fail.
+                            }
+                        }
+                        if ((-1 < matchingLineNumber) && (-1 == unmatchingLineNumber))
+                        {
+                            RecordPositiveMatch(qf.file.FullName,matchingLineNumber);
                         }
                         else
                         {
