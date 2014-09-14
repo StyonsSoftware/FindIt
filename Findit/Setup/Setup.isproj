@@ -28,10 +28,5 @@
 		</TaggedOutputs> -->
 	</ItemGroup>
 	<Import Project="$(MSBuildExtensionsPath32)\InstallShield\2013Limited\InstallShield.targets"/>
-	<ItemGroup>
-		<ProjectReference Include="..\Findit\Findit.csproj">
-			<Name>Findit</Name>
-			<Project>{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}</Project>
-		</ProjectReference>
-	</ItemGroup>
+	<ItemGroup/>
 </Project>

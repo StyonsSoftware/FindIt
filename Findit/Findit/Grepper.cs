@@ -45,49 +45,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace GrepTool
+namespace Findit
 {
     public class Grepper
     {
-        //structure to hold user parameters
-        public struct UserParameters
-        {
-            public int Verbosity;
-            public Boolean ShowPerfStats;
-            public string SearchPath;
-            public string[] SearchStrings;
-            public string SearchExtension;
-            public string SearchExcludeFiles;
-            public Boolean IncludeLineNumbers;
-            public Boolean Recurse;
-            public Boolean CaseSensitive;
-            //setting 'remind' to true will have no effect in a gui app.
-            //it is a command-line app feature.
-            public Boolean Remind;
-            public string[] AbsentStrings;
-            public Boolean Crippled;
-            public Boolean OnlyFileNames;
-            public Boolean IncludeOffice;
-        }
-
-        //structure to hold performance data
-        public struct PerfStat
-        {
-            public float ElapsedSeconds;
-            public Int64 FilesSearched;
-            public Int64 LinesSearched;
-            public Int64 Matches;
-            public Int64 Skipped;
-            public Int64 Errors;
-        }
-
-        //structure of search results (we will have a big array of these)
-        public struct SearchResult
-        {
-            public string FileName;
-            public Int64 LineNumber;
-        }
-
         //do we record every single minute little detail?
         //if so, then they get their own array similar to search results
         public Boolean RecordNotifications
@@ -154,9 +115,6 @@ namespace GrepTool
             }
         }
 
-        //this is nice for callers to show progress (searching folder c:\1, c:\2, c:\2, etc)
-        public string LastSearchedFolder = "";
-
         private Boolean m_RecordNotifications = false;
         private Boolean m_RecordExceptions = false;
 
@@ -173,52 +131,153 @@ namespace GrepTool
         public string[] Notifications;
         private int idxNotifications = 0;
 
-        public PerfStat PerformanceStats;
-        private UserParameters UserPrefs;
-        private static System.Diagnostics.Stopwatch Swatch = new System.Diagnostics.Stopwatch();
-      
-        public Grepper(UserParameters prefs)
+        private UserParameters _userPrefs;
+        private int _threadIndex;
+        private int _lastFileSearched = 0;
+
+        public PerfStat perfStats;
+
+        public Grepper(UserParameters prefs, int threadIndex)
         {
-            Swatch = new System.Diagnostics.Stopwatch();
-            PerformanceStats.ElapsedSeconds = 0;
-            PerformanceStats.FilesSearched = 0;
-            PerformanceStats.LinesSearched = 0;
-            PerformanceStats.Errors = 0;
-            PerformanceStats.Skipped = 0;
-            PerformanceStats.Matches = 0;
             RecordExceptions = prefs.Verbosity > 0;
             RecordNotifications = prefs.Verbosity > 1;
-            if (0 == prefs.SearchExtension.Trim().Length)
+            if ((prefs.FileNamePatterns != null) && (0 == prefs.FileNamePatterns.Length))
             {
-                prefs.SearchExtension = "*.*";
+                string[] defaultPattern = { "*.*" };
+                prefs.FileNamePatterns = defaultPattern;
             }
-            if (0 == prefs.SearchExcludeFiles.Trim().Length)
+            if ((prefs.SearchExcludeFiles != null) && (0 == prefs.SearchExcludeFiles.Trim().Length))
             {
                 prefs.SearchExcludeFiles = "";
             }
-            UserPrefs = prefs;
+            _userPrefs = prefs;
+            _threadIndex = threadIndex;
+            Globals.statBoard.GrepComplete[_threadIndex] = false;
+            InitializePerformanceStats();
+        }
+
+        private void InitializePerformanceStats()
+        {
+            perfStats.FilesMatched = 0;
+            perfStats.FilesUnmatched = 0;
+            perfStats.LinesSearched = 0;
+            perfStats.FileErrorCount = 0;
+            perfStats.BinarySkipped = 0;
         }
 
         public void Search()
         {
+            //this method is going to be running in a thread.
+            //it needs to watch for new files thrown onto the queue to be processed.
+            //when it sees new files, it needs to grab them and search them.
+            //any matches get thrown onto SearchResults, where someone else can pick them up
             try
             {
-                PerformanceStats.ElapsedSeconds = 0;
-                PerformanceStats.FilesSearched = 0;
-                PerformanceStats.LinesSearched = 0;
-                Swatch.Reset();
-                Swatch.Start();
+                //the list of files to be searched is being built by someone else.
+                //that "someone else" will tell us when the list is complete by setting the FileFindingComplete flag.
+                //until then, keep watching the list for any new entries.
+                while (!Globals.statBoard.FileFindingComplete)
+                {
+                    int count = Globals.processorQueues[_threadIndex].filesToSearch.Count;
+                    //go from wherever i left off to the (new) end of my to-do list
+                    for (int i = _lastFileSearched; i < count; ++i)
+                    {
+                        if (Globals.processorQueues[_threadIndex].filesToSearch[i] != null)
+                        {
+                            string currentFilename = Globals.processorQueues[_threadIndex].filesToSearch[i].file.FullName;
+                            if(_userPrefs.OnlyFileNames)
+                            {
+                                RecordPositiveMatch(currentFilename, 0);
+                                perfStats.FilesMatched = Globals.processorQueues[_threadIndex].filesToSearch.Count;
+                                break;
+                            }
+                            if (!Globals.processorQueues[_threadIndex].filesToSearch[i].HasBeenSearched)
+                            {
+                                //ok, this file has not been searched.  search it, if possible.
+                                Int64 lineNumber = -1;
+                                Globals.statBoard.LastSearchedFolder = Globals.processorQueues[_threadIndex].filesToSearch[i].file.DirectoryName;
+                                foreach (string term in _userPrefs.SearchStrings)
+                                {
+                                    lineNumber = IsTextInFile(currentFilename, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                                    Globals.processorQueues[_threadIndex].filesToSearch[i].MatchLineNumber = lineNumber;
+                                    Globals.processorQueues[_threadIndex].filesToSearch[i].HasBeenSearched = true;
+                                    if (-1 == lineNumber)
+                                    {
+                                        break;  //both terms are required.  if one is missing, we can quit.
+                                    }
+                                }
+                                if (-1 < lineNumber)
+                                {
+                                    RecordPositiveMatch(currentFilename, lineNumber);
+                                }
+                                else
+                                {
+                                    perfStats.FilesUnmatched++;
+                                }
+                            }
+                            else
+                            {
+                                StoreException("File " + currentFilename + " had already been searched.");
+                            }
+                        }
+                        else
+                        {
+                            StoreException("Index " + i.ToString() + " was null");
+                        }
+                    }
+                    _lastFileSearched = count;
+                }
 
-                //rubber hits road in here
-                ListMatchesInFolder(UserPrefs.SearchPath);
-
-                Swatch.Stop();
-                PerformanceStats.ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
+                //now that the search is done, do one last pass to make sure we didnt miss anything
+                foreach (QueuedFile qf in Globals.processorQueues[_threadIndex].filesToSearch)
+                {
+                    if (!qf.HasBeenSearched)
+                    {
+                        Int64 lineNumber = -1;
+                        if (_userPrefs.OnlyFileNames)
+                        {
+                            RecordPositiveMatch(qf.file.FullName, 0);
+                            perfStats.FilesMatched = Globals.processorQueues[_threadIndex].filesToSearch.Count;
+                            break;
+                        }
+                        foreach (string term in _userPrefs.SearchStrings)
+                        {
+                            lineNumber = IsTextInFile(qf.file.FullName, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                            qf.MatchLineNumber = lineNumber;
+                            qf.HasBeenSearched = true;
+                            if (-1 == lineNumber)
+                            {
+                                break;
+                            }
+                        }
+                        if (-1 < lineNumber)
+                        {
+                            RecordPositiveMatch(qf.file.FullName,lineNumber);
+                        }
+                        else
+                        {
+                            perfStats.FilesUnmatched++;
+                        }
+                    }
+                }
+                Globals.statBoard.GrepComplete[_threadIndex] = true;
             }
             catch (Exception e)
             {
                 StoreException(e.Message);
+                if (_threadIndex < Globals.statBoard.GrepComplete.Length)
+                {
+                    Globals.statBoard.GrepComplete[_threadIndex] = true;
+                }
             }
+        }
+
+        private void RecordPositiveMatch(string currentFilename, Int64 lineNumber)
+        {
+            SearchResults[SearchResultCount].FileName = currentFilename;
+            SearchResults[SearchResultCount].LineNumber = lineNumber;
+            perfStats.FilesMatched++;
+            SearchResultCount++;
         }
 
         private Boolean IsFileInFileArray(ref System.IO.FileInfo[] arry, System.IO.FileInfo f)
@@ -231,139 +290,6 @@ namespace GrepTool
                 }
             }
             return false;
-        }
-
-        private void ListMatchesInFolder(string FolderToSearch)
-        {
-            //this is where the fluff comes to an end and we actually search for text in files
-            try
-            {
-                LastSearchedFolder = FolderToSearch;
-                StoreNotification("Searching folder: '" + FolderToSearch + "'");
-                System.IO.DirectoryInfo folder = new System.IO.DirectoryInfo(FolderToSearch);
-
-                //get the list of matching files, and also the list of excluded files.
-                //subtract the excluded from the matches, then search among that final list.
-                System.IO.FileInfo[] ExcludedFiles = folder.GetFiles(UserPrefs.SearchExcludeFiles);
-                System.IO.FileInfo[] IncludedFiles = folder.GetFiles(UserPrefs.SearchExtension);
-                System.IO.FileInfo[] FilesToSearch = { };
-                Array.Resize(ref FilesToSearch, IncludedFiles.Length);
-                int idx = 0;
-                foreach (System.IO.FileInfo f in IncludedFiles)
-                {
-                    if (!IsFileInFileArray(ref ExcludedFiles,f))
-                    {
-                        FilesToSearch[idx++] = f;
-                    }
-                }
-
-                if (UserPrefs.OnlyFileNames)
-                {
-                    PerformanceStats.FilesSearched += folder.GetFiles().Length;
-                }
-
-                Array.Resize(ref FilesToSearch, idx);
-
-                foreach (System.IO.FileInfo currFile in FilesToSearch)
-                {
-                    Int64 MatchLine = -1;
-                    Int64 UnmatchLine = -1;
-
-                    if (UserPrefs.OnlyFileNames)
-                    {
-                        PerformanceStats.ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
-                        SearchResults[SearchResultCount].LineNumber = 0;
-                        SearchResults[SearchResultCount].FileName = currFile.FullName;
-                        SearchResultCount++;
-                        PerformanceStats.Matches++;
-                    }
-                    else
-                    {
-                        foreach (string s in UserPrefs.SearchStrings)
-                        {
-                            MatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive, UserPrefs.IncludeOffice);
-                            if (-1 == MatchLine)
-                            {
-                                break;
-                            }
-                        }
-
-                        foreach (string s in UserPrefs.AbsentStrings)
-                        {
-                            if (0 < s.Trim().Length)
-                            {
-                                UnmatchLine = IsTextInFile(currFile.FullName, s, UserPrefs.CaseSensitive, UserPrefs.IncludeOffice);
-                                if (-1 != UnmatchLine)
-                                {
-                                    StoreNotification("Found unwanted text " + s + " in file " + currFile.FullName);
-                                    break;
-                                }
-                            }
-                        }
-
-                        PerformanceStats.FilesSearched++;
-                        PerformanceStats.ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
-                        if ((-1 < MatchLine) && (-1 == UnmatchLine))
-                        {
-                            string newline = currFile.FullName;
-                            SearchResults[SearchResultCount].LineNumber = MatchLine;
-                            SearchResults[SearchResultCount].FileName = newline;
-                            SearchResultCount++;
-                            PerformanceStats.Matches++;
-                        }
-                        else
-                        {
-                            StoreNotification("NOMATCH: " + currFile.FullName);
-                        }
-
-                        //force the search to run slowly when in 'crippled' mode.
-                        //this is to support the idea of a limited functionality
-                        //mode after a trial period has expired.
-                        if (UserPrefs.Crippled)
-                        {
-                            WaitWithoutSleeping(c_CrippleWaitMs);
-                        }
-                    }
-                }
-                if (UserPrefs.Recurse)
-                {
-                    foreach (System.IO.DirectoryInfo subFolder in folder.GetDirectories())
-                    {
-                        ListMatchesInFolder(subFolder.FullName);  //recursive
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                StoreException("Exception in folder '" + FolderToSearch + "'" + 
-                    ".  The exception was: '" + e.Message + "'");
-            }
-        }
-
-        private void WaitWithoutSleeping(int MsToWait)
-        {
-            //since Grepper might be running in a thread, we cannot just call
-            //Thread.Sleep, since that would indicate to a caller that we are
-            //no longer active.  instead this function will simulate the 'sleep' function
-            //by doing busywork until N milliseconds have passed
-
-            DateTime waituntil = DateTime.Now;
-
-            for (int i = 0; i < MsToWait; ++i)
-            {
-                waituntil = waituntil + OneMs;
-            }
-
-            while (DateTime.Now < waituntil)
-            {
-                //busywork
-                int x = 0;
-                ++x;
-                if (x > 100000)
-                {
-                    break;
-                }
-            }
         }
 
         private Int64 IsTextInOfficeDocument(string filename, string searchtext, Boolean casesensitive, Boolean includeOffice)
@@ -382,7 +308,6 @@ namespace GrepTool
                         for (int i = 0; i < completeText.Length; ++i)
                         {
                             string currentLine = completeText[i];
-                            PerformanceStats.LinesSearched++;
                             currlinenum++;
                             if (-1 < currentLine.IndexOf(searchtext, (casesensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase)))
                             {
@@ -417,7 +342,7 @@ namespace GrepTool
             //look for a match in a file, quit as soon as you find it
             try
             {
-                Int64 currlinenum = 0;
+                int currlinenum = 0;
                 StoreNotification("Searching file '" + filename + "'");
                 System.IO.StreamReader reader = new System.IO.StreamReader(filename);
                 Boolean BinaryChecked = false;
@@ -431,26 +356,33 @@ namespace GrepTool
                         //don't try to check binary files, and don't check for binariness > 1 time
                         if (currentLine != null)
                         {
-                            PerformanceStats.LinesSearched++;
-
                             currlinenum++;
-                            if (!includeOffice && !BinaryChecked && IsBinary(currentLine))
+                            if(!BinaryChecked && IsBinary(currentLine))
                             {
-                                StoreNotification("Skipped binary file " + filename);
-                                PerformanceStats.Skipped++;
                                 BinaryChecked = true;
-                                return -1;
+                                if(includeOffice && IsOfficeDocument(filename))
+                                {
+                                    return IsTextInOfficeDocument(filename, searchtext, casesensitive, includeOffice);
+                                }
+                                else
+                                {
+                                    RecordBinaryFile(filename);
+                                    return -1;
+                                }
                             }
-                            else if (includeOffice && IsOfficeDocument(filename))
+                            else if (-1 < currentLine.IndexOf(searchtext, (casesensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase)))
                             {
-                                return IsTextInOfficeDocument(filename, searchtext, casesensitive, includeOffice);
-                            }
-                            if (-1 < currentLine.IndexOf(searchtext, (casesensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase)))
-                            {
+                                perfStats.LinesSearched += currlinenum;  //we stopped searching at this line #
                                 return currlinenum;
                             }
                         }
+                        else
+                        {
+                            RecordBinaryFile(filename);
+                            return -1;
+                        }
                     } while (!reader.EndOfStream);
+                    perfStats.LinesSearched += currlinenum;  //we searched every line in this file
                     return -1;
                 }
                 finally
@@ -471,6 +403,12 @@ namespace GrepTool
                 StoreException("Exception in file '" + filename + "': '" + e.Message + "'");
                 return -1;
             }
+        }
+
+        private void RecordBinaryFile(string filename)
+        {
+            StoreNotification("Skipped binary file " + filename);
+            perfStats.BinarySkipped++;
         }
 
         private bool IsOfficeDocument(string filename)
@@ -517,7 +455,7 @@ namespace GrepTool
                 return true;
             }
         }
-        
+
         private void StoreNotification(string notifymsg)
         {
             if (RecordNotifications)
@@ -528,8 +466,6 @@ namespace GrepTool
 
         private void StoreException(string exceptmsg)
         {
-            //always record the count, but don't store the message unless they asked
-            PerformanceStats.Errors++;
             if (RecordExceptions)
             {
                 Exceptions[idxExceptions++] = exceptmsg;

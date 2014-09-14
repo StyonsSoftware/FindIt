@@ -27,11 +27,13 @@ namespace Findit
         private string[] m_RecentSearchFolders = { "" };
         private string m_CustomEditorExe = "";
         private Boolean m_RunSearchesAfterLoad = false;
+        private int m_SearchThreadCount = 1;
 
         private const string c_RecentSavedSearches = "RecentSavedSearches";
         private const string c_RecentSearchFolders = "RecentSearchFolders";
         private const string c_CustomEditorExe = "CustomEditorExe";
         private const string c_RunSearchesAfterLoad = "RunSearchesAfterLoad";
+        private const string c_SearchThreadCount = "SearchThreadCount";
 
         public string[] RecentSavedSearches
         {
@@ -69,6 +71,18 @@ namespace Findit
             }
         }
 
+        public int SearchThreadCount
+        {
+            get
+            {
+                return m_SearchThreadCount;
+            }
+            set
+            {
+                m_SearchThreadCount = value;
+            }
+        }
+
         public Boolean RunSearchesAfterLoad
         {
             get
@@ -103,6 +117,7 @@ namespace Findit
             SaveTerms(c_RecentSearchFolders, ref m_RecentSearchFolders);
             reg.SetValue(c_CustomEditorExe, CustomEditorExe);
             reg.SetValue(c_RunSearchesAfterLoad, RunSearchesAfterLoad.ToString());
+            reg.SetValue(c_SearchThreadCount, SearchThreadCount.ToString());
         }
 
         public static string DefaultCustomEditor()
@@ -160,6 +175,10 @@ namespace Findit
             RecentSearchFolders = LoadTerms(c_RecentSearchFolders);
             CustomEditorExe = reg.GetValue(c_CustomEditorExe, DefaultCustomEditor()).ToString();
             RunSearchesAfterLoad = (reg.GetValue(c_RunSearchesAfterLoad, DefaultRunSearchesAfterLoad().ToString()).ToString() == true.ToString());
+            string strThreadCount = reg.GetValue(c_SearchThreadCount, Globals.RecommendedSearchThreadCount.ToString()).ToString();
+            int iSearchThreadCount = 0;
+            int.TryParse(strThreadCount, out iSearchThreadCount);
+            SearchThreadCount = iSearchThreadCount;
         }
 
         public override void GetObjectData(SerializationInfo info, StreamingContext ctxt)

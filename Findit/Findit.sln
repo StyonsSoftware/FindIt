@@ -3,9 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Findit", "Findit\Findit.csproj", "{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindIt", "Findit\FindIt.csproj", "{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}"
 EndProject
 Project("{6141683F-8A12-4E36-9623-2EB02B2C2303}") = "Setup", "Setup\Setup.isproj", "{589F83C5-39E0-4E07-AC79-E3C4407910EF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED} = {D5A04AB0-AB2C-4E60-8A7F-63500244ACED}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
@@ -13,12 +16,12 @@ Global
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs37
 		SccLocalPath0 = .
-		SccProjectUniqueName1 = Findit\\Findit.csproj
-		SccProjectName1 = Findit
-		SccLocalPath1 = Findit
-		SccProjectUniqueName2 = Setup\\Setup.isproj
-		SccProjectName2 = Setup
-		SccLocalPath2 = Setup
+		SccProjectUniqueName1 = Setup\\Setup.isproj
+		SccProjectName1 = Setup
+		SccLocalPath1 = Setup
+		SccProjectUniqueName2 = Findit\\FindIt.csproj
+		SccProjectName2 = Findit
+		SccLocalPath2 = Findit
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CD_ROM|Any CPU = CD_ROM|Any CPU

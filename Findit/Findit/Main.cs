@@ -11,18 +11,19 @@ namespace Findit
 {
     public partial class frmMain : Form
     {
-        GrepTool.Grepper gp;
-        Thread searchThread;
-        GrepTool.Grepper.UserParameters uparms;
+        UserParameters up;
         Findit.Registration regInfo;
         Boolean g_Crippled = false;
         Boolean AlreadyQuit = false;
         Boolean FinishedLoading = false;
-
-        private int LastReadResult = 0;
+        private float ElapsedSeconds = 0;
         private const int c_RecentSearchCutoff = 10;
         private const int c_MaxRecentSearches = 10;
         const int c_buffer = 20;
+        private static int[] lastReportedIndexes = { };
+        private QueueBuilder qb;
+        Grepper[] searchers = { };
+        System.Diagnostics.Stopwatch Swatch = new System.Diagnostics.Stopwatch();
 
         public frmMain()
         {
@@ -210,45 +211,119 @@ namespace Findit
             }
         }
 
-        private void ConductSearch()
+        private void PrepareForNewSearch()
         {
+            ResetSearchLookups();
+            foreach(FileQueue fq in Globals.processorQueues)
+            {
+                fq.filesToSearch.Clear();
+            }
+            Globals.processorQueues.Clear();
             runSearchToolStripMenuItem.Visible = false;
             cancelSearchToolStripMenuItem.Visible = !runSearchToolStripMenuItem.Visible;
             lbResults.Items.Clear();
-            LastReadResult = 0;
             splitCont.Panel2Collapsed = true;
-            uparms = new GrepTool.Grepper.UserParameters();
-            uparms.SearchPath = cboSearchFolders.Text;
-            uparms.SearchStrings = rtbSearchTerms.Lines;
-            uparms.Recurse = cbIncludeSubfolders.Checked;
-            uparms.Verbosity = 0;
-            uparms.CaseSensitive = cbCaseSensitive.Checked;
-            uparms.IncludeLineNumbers = cbLineNos.Checked;
-            uparms.Remind = true;
-            uparms.SearchExtension = txbFileType.Text;
-            uparms.SearchExcludeFiles = txbFileExclude.Text;
-            uparms.ShowPerfStats = cbPerfStats.Checked;
-            uparms.AbsentStrings = rtbExcludes.Lines;
-            uparms.Crippled = g_Crippled;
-            uparms.OnlyFileNames = cbOnlyFiles.Checked;
-            uparms.IncludeOffice = cbIncludeOffice.Checked;
-            
-            gp = new GrepTool.Grepper(uparms);
-            searchThread = new Thread(gp.Search);
-            searchThread.IsBackground = true;
-            searchThread.Start();
+            for(int i = 0; i < searchers.Length; ++i)
+            {
+                searchers[i].SearchResultCount = 0;
+                Array.Resize(ref searchers[i].SearchResults, 0);
+            }
+        }
 
-            //at this point, the thread is running.  just watch it and print what's going on
+        private void ResetSearchLookups()
+        {
+            for (int i = 0; i < searchers.Length; ++i)
+            {
+                lastReportedIndexes[i] = 0;
+            }
+        }
+
+        private UserParameters GetUserParams()
+        {
+            UserParameters result = new UserParameters();
+
+            //TODO: the engine supports multiple search paths.  update the UI to surface that feature.
+            string[] searchpaths = { };
+            Array.Resize(ref searchpaths, 1);
+            searchpaths[0] = cboSearchFolders.Text;
+            result.SearchPaths = searchpaths;
+
+            result.SearchStrings = rtbSearchTerms.Lines;
+            result.Recurse = cbIncludeSubfolders.Checked;
+            result.Verbosity = 0;
+            result.CaseSensitive = cbCaseSensitive.Checked;
+            result.IncludeLineNumbers = cbLineNos.Checked;
+            result.Remind = true;
+
+            //TODO: the engine supports multiple file patterns.  update the UI to surface that feature.
+            string[] searchextensions = { };
+            Array.Resize(ref searchextensions, 1);
+            searchextensions[0] = txbFileType.Text;
+            result.FileNamePatterns = searchextensions;
+
+            result.SearchExcludeFiles = txbFileExclude.Text;
+            result.ShowPerfStats = cbPerfStats.Checked;
+            result.AbsentStrings = rtbExcludes.Lines;
+            result.Crippled = g_Crippled;
+            result.OnlyFileNames = cbOnlyFiles.Checked;
+            result.IncludeOffice = cbIncludeOffice.Checked;
+            return result;
+        }
+
+        private void ConductSearch()
+        {
+            PrepareForNewSearch();
+            up = GetUserParams();
+            
+            GUIPreferences gp = new GUIPreferences();
+            int searchThreadCount = (g_Crippled?1:gp.SearchThreadCount);  //crippled == only one search thread allowed
+            Array.Resize(ref searchers, searchThreadCount);
+            for (int i = 0; i < searchThreadCount; ++i)
+            {
+                Globals.processorQueues.Add(new FileQueue());
+            }
+            Globals.statBoard = new StatusBoard(searchThreadCount);
+            for (int i = 0; i < searchThreadCount; ++i)
+            {
+                searchers[i] = new Grepper(up, i);
+            }
+
+            qb = new QueueBuilder(up.SearchPaths, up.FileNamePatterns, searchThreadCount);
+            System.Threading.Thread queueBuilderThread = new System.Threading.Thread(qb.BuildQueues);
+            queueBuilderThread.IsBackground = true;
+            Swatch.Reset();
+            Swatch.Start();
+
+            queueBuilderThread.Start();
+
+            //at this point, the pile of "files to be searched" is accumulating.
+            //time to release the hounds, and have them start processing those files.
+            foreach (Grepper g in searchers)
+            {
+                System.Threading.Thread textFindingThread = new System.Threading.Thread(g.Search);
+                textFindingThread.IsBackground = true;
+                textFindingThread.Start();
+            }
+            //at this point, the threads are running.  just watch them and print what's going on
             timerRefreshGUI.Enabled = true;
+            
+            Array.Resize(ref lastReportedIndexes, searchers.Length);
+            for (int i = 0; i < lastReportedIndexes.Length; ++i)
+            {
+                lastReportedIndexes[i] = 0;
+            }
+
             while (SearchIsActive())
             {
-                RefreshGUI();
                 System.Threading.Thread.Sleep(0);
                 Application.DoEvents();
             }
             //one final printout in case we missed anything
             RefreshGUI();
             timerRefreshGUI.Enabled = false;
+            
+            Swatch.Stop();
+            ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
 
             if (cbPerfStats.Checked)
             {
@@ -278,7 +353,7 @@ namespace Findit
         private Boolean ValidSearchTerms(ref string msg)
         {
             //either a search term has been specified or an exclude term has been specified,
-            //or they are just searching for file names and specified
+            //or they are just searching for file names and specified a file filter
             Boolean result =
                    (0 < rtbSearchTerms.Lines.Length)
                 || (0 < rtbExcludes.Lines.Length)
@@ -319,33 +394,31 @@ namespace Findit
 
         private Boolean SearchIsActive()
         {
-            return (
-                    (searchThread != null)
-                    &&
-                    (
-                     (searchThread.ThreadState == System.Threading.ThreadState.Running)
-                     ||
-                     (searchThread.ThreadState == System.Threading.ThreadState.Background)
-                    )
-                   );
+            return (Globals.statBoard == null?false:!Globals.statBoard.AllDone);
         }
 
         private void RefreshSearchResults()
         {
-            if ((gp != null) && (LastReadResult < gp.SearchResultCount))
+            //report any new results found
+            for (int i = 0; i < searchers.Length; ++i)
             {
-                for (int i = LastReadResult; i < gp.SearchResultCount; ++i)
+                int resultCountFromThisThread = searchers[i].SearchResultCount;
+                //display any new results reported by any of the threads
+                if (resultCountFromThisThread > lastReportedIndexes[i])
                 {
-                    if (uparms.IncludeLineNumbers)
+                    for (int j = lastReportedIndexes[i]; j < resultCountFromThisThread; ++j)
                     {
-                        writeoutput(gp.SearchResults[i].FileName + " @ " + gp.SearchResults[i].LineNumber.ToString());
-                    }
-                    else
-                    {
-                        writeoutput(gp.SearchResults[i].FileName);
+                        if (up.IncludeLineNumbers)
+                        {
+                            writeoutput(searchers[i].SearchResults[j].FileName + " @ " + searchers[i].SearchResults[j].LineNumber.ToString());
+                        }
+                        else
+                        {
+                            writeoutput(searchers[i].SearchResults[j].FileName);
+                        }
                     }
                 }
-                LastReadResult = gp.SearchResultCount;
+                lastReportedIndexes[i] = resultCountFromThisThread;
             }
         }
 
@@ -401,7 +474,7 @@ namespace Findit
                 btnSearch.Text = "Working...";
                 runSearchToolStripMenuItem.Visible = false;
                 cancelSearchToolStripMenuItem.Visible = true;
-                lblProgress.Text = gp.LastSearchedFolder;
+                lblProgress.Text = Globals.statBoard.LastSearchedFolder;
                 lblCrippled.Visible = g_Crippled;
                 btnClear.Enabled = false;
             }
@@ -418,7 +491,57 @@ namespace Findit
             }
             SetEnabledStatesDuringSearch(!btnSearch.Enabled);
             btnCancel.Enabled = !btnSearch.Enabled;
+            RefreshProgressBar();
+            //RefreshPSLabels();
             Application.DoEvents();
+        }
+
+        private void RefreshPSLabels()
+        {
+            ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
+            PerfStat ps = AggregatePerformanceStats();
+            Int64 fps = 0;
+            Int64 lps = 0;
+            if (0 < ElapsedSeconds)
+            {
+                fps = (Int64)Math.Round(ps.TotalFilesProcessed / ElapsedSeconds);
+                lps = (Int64)Math.Round(ps.LinesSearched / ElapsedSeconds);
+            }
+            lblFPSValue.Text = fps.ToString("###,###,##0");
+            lblLPSValue.Text = lps.ToString("###,###,##0");
+        }
+
+        private void RefreshProgressBar()
+        {
+            int fileCount = 0;
+            foreach(FileQueue fq in Globals.processorQueues)
+            {
+                fileCount += fq.filesToSearch.Count;
+            }
+            pbar.Maximum = fileCount;
+            int filesSearched = 0;
+            foreach (Grepper g in searchers)
+            {
+                filesSearched += g.perfStats.TotalFilesProcessed;
+            }
+
+            pbar.Value = Math.Min(filesSearched,fileCount);
+            lblStats.Text = filesSearched.ToString() + " of " + fileCount.ToString() + " files checked";
+        }
+
+        private PerfStat AggregatePerformanceStats()
+        {
+            PerfStat result = new PerfStat();
+            
+            foreach (Grepper g in searchers)
+            {
+                result.FilesUnmatched += g.perfStats.FilesUnmatched;
+                result.LinesSearched += g.perfStats.LinesSearched;
+                result.FilesMatched += g.perfStats.FilesMatched;
+                result.BinarySkipped += g.perfStats.BinarySkipped;
+                result.FileErrorCount += g.perfStats.FileErrorCount;
+            }
+            return result;
         }
 
         private void timerRefreshGUI_Tick(object sender, EventArgs e)
@@ -430,24 +553,26 @@ namespace Findit
         {
             try
             {
+                PerfStat ps = AggregatePerformanceStats();
                 Int64 fps = 0;
                 Int64 lps = 0;
-                if (0 < gp.PerformanceStats.ElapsedSeconds)
+                if (0 < ElapsedSeconds)
                 {
-                    fps = (Int64)Math.Round(gp.PerformanceStats.FilesSearched / gp.PerformanceStats.ElapsedSeconds);
-                    lps = (Int64)Math.Round(gp.PerformanceStats.LinesSearched / gp.PerformanceStats.ElapsedSeconds);
+                    fps = (Int64)Math.Round(ps.TotalFilesProcessed / ElapsedSeconds);
+                    lps = (Int64)Math.Round(ps.LinesSearched / ElapsedSeconds);
                 }
                 writeoutput("");
                 writeoutput("Performance stats:");
                 writeoutput("-------------------------------");
-                writeoutput("Elapsed seconds: " + gp.PerformanceStats.ElapsedSeconds.ToString());
-                writeoutput("Files searched: " + gp.PerformanceStats.FilesSearched.ToString());
-                writeoutput("Lines searched: " + gp.PerformanceStats.LinesSearched.ToString());
+                writeoutput("Elapsed seconds: " + ElapsedSeconds.ToString());
+                writeoutput("Files checked: " + ps.TotalFilesProcessed.ToString());
+                writeoutput("Lines searched: " + ps.LinesSearched.ToString());
                 writeoutput("Files per second: " + fps.ToString());
                 writeoutput("Lines per second: " + lps.ToString());
-                writeoutput("Matches: " + gp.PerformanceStats.Matches.ToString());
-                writeoutput("Skipped (binary): " + gp.PerformanceStats.Skipped.ToString());
-                writeoutput("Errors: " + gp.PerformanceStats.Errors.ToString());
+                writeoutput("Matches: " + ps.FilesMatched.ToString());
+                writeoutput("No match: " + ps.FilesUnmatched.ToString());
+                writeoutput("Skipped (binary): " + ps.BinarySkipped.ToString());
+                writeoutput("Errors: " + ps.FileErrorCount.ToString());
                 writeoutput("");
             }
             catch (Exception e)
@@ -468,9 +593,10 @@ namespace Findit
 
         private void CancelSearch()
         {
-            if(SearchIsActive())
+            if(SearchIsActive() && Globals.statBoard != null)
             {
-                searchThread.Abort();
+                //put a stick in the bicycle tires
+                Globals.statBoard.Halt = true;
             }
             RefreshGUI();
         }
@@ -480,8 +606,7 @@ namespace Findit
             SavePreferences();
             if (SearchIsActive())
             {
-                if (DialogResult.Yes == MessageBox.Show("A search is in progress.  Really quit?",
-                    "Are you sure?", MessageBoxButtons.YesNo))
+                if (DialogResult.Yes == MessageBox.Show("A search is in progress.  Really quit?", "Are you sure?", MessageBoxButtons.YesNo))
                 {
                     CancelSearch();
                     Application.Exit();
@@ -611,10 +736,20 @@ namespace Findit
         {
             try
             {
-                string selectedfname = gp.SearchResults[lbResults.SelectedIndex].FileName;
+                string selectedfname = lbResults.Items[lbResults.SelectedIndex].ToString();
                 if (System.IO.File.Exists(selectedfname))
                 {
-                    Int64 CenterOnThisLine = gp.SearchResults[lbResults.SelectedIndex].LineNumber;
+                    Int64 CenterOnThisLine = 0;
+                    foreach(FileQueue queue in Globals.processorQueues)
+                    {
+                        foreach(QueuedFile f in queue.filesToSearch)
+                        {
+                            if(f.file.FullName.ToUpper() == selectedfname.ToUpper())
+                            {
+                                CenterOnThisLine = f.MatchLineNumber;
+                            }
+                        }
+                    }
                     RefreshExcerptPane(selectedfname, CenterOnThisLine, ref rtbExcerpt, rtbSearchTerms.Lines);
                 }
             }
@@ -1250,6 +1385,19 @@ namespace Findit
         private void rtbSearchTerms_KeyPress(object sender, KeyPressEventArgs e)
         {
             SetSearchTermsWidth();
+        }
+
+        private void pbar_Click(object sender, EventArgs e)
+        {
+            return;
+            ShowDebugInfo();
+        }
+
+        private void ShowDebugInfo()
+        {
+            Diagnostics dg = new Diagnostics();
+            dg.searchers = searchers;
+            dg.Show();
         }
     }
 }

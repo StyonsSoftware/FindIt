@@ -30,6 +30,10 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Config));
             this.panel1 = new System.Windows.Forms.Panel();
+            this.lblSelectedThreadCount = new System.Windows.Forms.Label();
+            this.lblSearchThreadCount = new System.Windows.Forms.Label();
+            this.tbarThreadCount = new System.Windows.Forms.TrackBar();
+            this.cbRunSearchAfterLoad = new System.Windows.Forms.CheckBox();
             this.txbColor = new System.Windows.Forms.TextBox();
             this.lblInvalidNotice = new System.Windows.Forms.Label();
             this.txbCustomEditorExe = new System.Windows.Forms.TextBox();
@@ -38,13 +42,18 @@
             this.panel2 = new System.Windows.Forms.Panel();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.cbRunSearchAfterLoad = new System.Windows.Forms.CheckBox();
+            this.lblRecommendThreadCount = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tbarThreadCount)).BeginInit();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.lblRecommendThreadCount);
+            this.panel1.Controls.Add(this.lblSelectedThreadCount);
+            this.panel1.Controls.Add(this.lblSearchThreadCount);
+            this.panel1.Controls.Add(this.tbarThreadCount);
             this.panel1.Controls.Add(this.cbRunSearchAfterLoad);
             this.panel1.Controls.Add(this.txbColor);
             this.panel1.Controls.Add(this.lblInvalidNotice);
@@ -55,8 +64,48 @@
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Margin = new System.Windows.Forms.Padding(4);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(696, 200);
+            this.panel1.Size = new System.Drawing.Size(696, 349);
             this.panel1.TabIndex = 0;
+            // 
+            // lblSelectedThreadCount
+            // 
+            this.lblSelectedThreadCount.AutoSize = true;
+            this.lblSelectedThreadCount.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSelectedThreadCount.Location = new System.Drawing.Point(157, 193);
+            this.lblSelectedThreadCount.Name = "lblSelectedThreadCount";
+            this.lblSelectedThreadCount.Size = new System.Drawing.Size(15, 18);
+            this.lblSelectedThreadCount.TabIndex = 18;
+            this.lblSelectedThreadCount.Text = "1";
+            // 
+            // lblSearchThreadCount
+            // 
+            this.lblSearchThreadCount.AutoSize = true;
+            this.lblSearchThreadCount.Location = new System.Drawing.Point(20, 144);
+            this.lblSearchThreadCount.Name = "lblSearchThreadCount";
+            this.lblSearchThreadCount.Size = new System.Drawing.Size(131, 18);
+            this.lblSearchThreadCount.TabIndex = 17;
+            this.lblSearchThreadCount.Text = "Search thread count";
+            // 
+            // tbarThreadCount
+            // 
+            this.tbarThreadCount.Location = new System.Drawing.Point(157, 144);
+            this.tbarThreadCount.Maximum = 50;
+            this.tbarThreadCount.Minimum = 1;
+            this.tbarThreadCount.Name = "tbarThreadCount";
+            this.tbarThreadCount.Size = new System.Drawing.Size(354, 42);
+            this.tbarThreadCount.TabIndex = 16;
+            this.tbarThreadCount.Value = 1;
+            this.tbarThreadCount.ValueChanged += new System.EventHandler(this.tbarThreadCount_ValueChanged);
+            // 
+            // cbRunSearchAfterLoad
+            // 
+            this.cbRunSearchAfterLoad.AutoSize = true;
+            this.cbRunSearchAfterLoad.Location = new System.Drawing.Point(117, 85);
+            this.cbRunSearchAfterLoad.Name = "cbRunSearchAfterLoad";
+            this.cbRunSearchAfterLoad.Size = new System.Drawing.Size(264, 22);
+            this.cbRunSearchAfterLoad.TabIndex = 15;
+            this.cbRunSearchAfterLoad.Text = "Run saved searches after loading them";
+            this.cbRunSearchAfterLoad.UseVisualStyleBackColor = true;
             // 
             // txbColor
             // 
@@ -115,7 +164,7 @@
             this.panel2.Controls.Add(this.btnSave);
             this.panel2.Controls.Add(this.btnCancel);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel2.Location = new System.Drawing.Point(0, 132);
+            this.panel2.Location = new System.Drawing.Point(0, 281);
             this.panel2.Margin = new System.Windows.Forms.Padding(4);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(696, 68);
@@ -151,21 +200,22 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
-            // cbRunSearchAfterLoad
+            // lblRecommendThreadCount
             // 
-            this.cbRunSearchAfterLoad.AutoSize = true;
-            this.cbRunSearchAfterLoad.Location = new System.Drawing.Point(117, 85);
-            this.cbRunSearchAfterLoad.Name = "cbRunSearchAfterLoad";
-            this.cbRunSearchAfterLoad.Size = new System.Drawing.Size(264, 22);
-            this.cbRunSearchAfterLoad.TabIndex = 15;
-            this.cbRunSearchAfterLoad.Text = "Run saved searches after loading them";
-            this.cbRunSearchAfterLoad.UseVisualStyleBackColor = true;
+            this.lblRecommendThreadCount.AutoSize = true;
+            this.lblRecommendThreadCount.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblRecommendThreadCount.ForeColor = System.Drawing.Color.Black;
+            this.lblRecommendThreadCount.Location = new System.Drawing.Point(20, 162);
+            this.lblRecommendThreadCount.Name = "lblRecommendThreadCount";
+            this.lblRecommendThreadCount.Size = new System.Drawing.Size(91, 18);
+            this.lblRecommendThreadCount.TabIndex = 19;
+            this.lblRecommendThreadCount.Text = "set from code";
             // 
             // Config
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(696, 200);
+            this.ClientSize = new System.Drawing.Size(696, 349);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
             this.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -176,6 +226,7 @@
             this.Load += new System.EventHandler(this.Config_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tbarThreadCount)).EndInit();
             this.panel2.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -193,5 +244,9 @@
         private System.Windows.Forms.Label lblInvalidNotice;
         private System.Windows.Forms.TextBox txbColor;
         private System.Windows.Forms.CheckBox cbRunSearchAfterLoad;
+        private System.Windows.Forms.Label lblSearchThreadCount;
+        private System.Windows.Forms.TrackBar tbarThreadCount;
+        private System.Windows.Forms.Label lblSelectedThreadCount;
+        private System.Windows.Forms.Label lblRecommendThreadCount;
     }
 }

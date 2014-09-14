@@ -341,7 +341,7 @@
 		<col def="S0">ISDotNetInstallerArgsCommit</col>
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
-		<row><td>Findit.Primary_output</td><td>{4B7A2EB9-587B-45E0-8B7D-728842D698AD}</td><td>INSTALLDIR</td><td>2</td><td/><td>findit.primary_output</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>FindIt.Primary_output</td><td>{93072D99-29B9-4935-BF9A-CE2B59BDB84A}</td><td>INSTALLDIR</td><td>2</td><td/><td>findit.primary_output</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISO19770_LocalTag</td><td>{151E6E4B-C630-4B49-8888-4230A3E2746A}</td><td>INSTALLDIR</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISO19770_SystemTag</td><td>{376A5FBF-40B1-43E1-9303-24B788BBC0F1}</td><td>CommonAppDataFolder</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 		<row><td>ISX_DEFAULTCOMPONENT1</td><td>{11333F72-73F9-429C-99C8-F081B126A179}</td><td>INSTALLDIR</td><td>2</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
@@ -1853,7 +1853,6 @@
 		<col def="S255">ProgId_</col>
 		<col def="S64">MIME_</col>
 		<col def="s38">Feature_</col>
-		<row><td>fit</td><td>Findit.Primary_output</td><td>fit.File</td><td/><td>AlwaysInstall</td></row>
 	</table>
 
 	<table name="Feature">
@@ -1875,7 +1874,7 @@
 	<table name="FeatureComponents">
 		<col key="yes" def="s38">Feature_</col>
 		<col key="yes" def="s72">Component_</col>
-		<row><td>AlwaysInstall</td><td>Findit.Primary_output</td></row>
+		<row><td>AlwaysInstall</td><td>FindIt.Primary_output</td></row>
 		<row><td>AlwaysInstall</td><td>ISX_DEFAULTCOMPONENT1</td></row>
 	</table>
 
@@ -1891,7 +1890,7 @@
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I4">ISAttributes</col>
 		<col def="S72">ISComponentSubFolder_</col>
-		<row><td>findit.primary_output</td><td>Findit.Primary_output</td><td>Findit.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;Findit&gt;|Built</td><td>3</td><td/></row>
+		<row><td>findit.primary_output</td><td>FindIt.Primary_output</td><td>FindIt.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;Findit&gt;|Built</td><td>3</td><td/></row>
 	</table>
 
 	<table name="FileSFPCatalog">
@@ -2035,7 +2034,7 @@
 		<col def="S0">FTPLocation</col>
 		<col def="S0">HTTPLocation</col>
 		<col def="S0">Miscellaneous</col>
-		<row><td>Findit.Primary_output</td><td/><td/><td>_B4F45189_3B68_4F69_9A19_91B91665E09A_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>FindIt.Primary_output</td><td/><td/><td>_99641C2E_D2B0_42BD_A578_07B71AA2E7F0_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISO19770_LocalTag</td><td/><td/><td>_6CD9FF4D_A456_4EC4_9532_109E3338EDB6_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISO19770_SystemTag</td><td/><td/><td>_E6986735_CBC2_4AB5_A48E_41553C98371E_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>ISX_DEFAULTCOMPONENT1</td><td/><td/><td>_FB8F27F1_988C_4969_970E_D4B508BF302E_FILTER</td><td/><td/><td/><td/></row>
@@ -2341,6 +2340,7 @@
 		<col def="i4">Type</col>
 		<row><td>CommonFilesFolder</td><td/><td/><td>1</td></row>
 		<row><td>Findit</td><td>Findit\Findit.csproj</td><td/><td>2</td></row>
+		<row><td>FoundIt</td><td>Findit\FoundIt.csproj</td><td/><td>2</td></row>
 		<row><td>ISPROJECTDIR</td><td/><td/><td>1</td></row>
 		<row><td>ISProductFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectDataFolder</td><td/><td/><td>1</td></row>
@@ -3872,7 +3872,7 @@
 		<col def="V0">Data</col>
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I2">ISIconIndex</col>
-		<row><td>ARPPRODUCTICON.exe</td><td/><td>d:\dev\src\codeplex\Findit\Findit\Binoculars.ico</td><td>0</td></row>
+		<row><td>ARPPRODUCTICON.exe</td><td/><td>&lt;VSSolutionFolder&gt;\Findit\Binoculars.ico</td><td>0</td></row>
 		<row><td>_AC0B17E8_D4EF_48AA_BFB8_B96FBE737E0A</td><td/><td>D:\dev\src\petproj\Findit\Findit\Binoculars.ico</td><td>0</td></row>
 		<row><td>_B84E10B3_E29E_4738_9D17_13D2185C47A0</td><td/><td>D:\dev\src\petproj\Findit\Findit\Binoculars.ico</td><td>0</td></row>
 		<row><td>_BB688323_5A07_4C67_A030_F5F2836A6257</td><td/><td>&lt;VSSolutionFolder&gt;\Findit\Binoculars.ico</td><td>0</td></row>
@@ -4008,7 +4008,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>ISTheme</td><td>InstallShield Blue.theme</td></row>
 		<row><td>ISUSLock</td><td>{1EC43AA9-4C37-43A6-B978-7B1B3AFF7CA8}</td></row>
 		<row><td>ISUSSignature</td><td>{36B86362-ADB3-45B8-8453-D6F59BE0DFEF}</td></row>
-		<row><td>ISVisitedViews</td><td>viewAssistant,viewFileExtensions,viewProject,viewUI,viewShortcuts,viewSystemSearch,viewSupportFiles,viewRelease</td></row>
+		<row><td>ISVisitedViews</td><td>viewAssistant,viewFileExtensions,viewProject,viewUI,viewShortcuts,viewSystemSearch,viewSupportFiles,viewRelease,viewUpgradePaths,viewISToday</td></row>
 		<row><td>Limited</td><td>1</td></row>
 		<row><td>LockPermissionMode</td><td>1</td></row>
 		<row><td>MsiExecCmdLineOptions</td><td/></row>
@@ -4311,7 +4311,6 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="S72">Icon_</col>
 		<col def="I2">IconIndex</col>
 		<col def="I4">ISAttributes</col>
-		<row><td>fit.File</td><td/><td/><td>FindIt saved search</td><td>_BB688323_5A07_4C67_A030_F5F2836A6257</td><td>0</td><td/></row>
 	</table>
 
 	<table name="Property">
@@ -4469,9 +4468,6 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="L255">FileName</col>
 		<col def="s72">DirProperty</col>
 		<col def="i2">InstallMode</col>
-		<row><td>FileKey1</td><td>Findit.Primary_output</td><td/><td>joseph_1_joseph_styons</td><td>2</td></row>
-		<row><td>FileKey2</td><td>Findit.Primary_output</td><td/><td>findit</td><td>2</td></row>
-		<row><td>NewShortcut11</td><td>Findit.Primary_output</td><td/><td>findit1</td><td>2</td></row>
 	</table>
 
 	<table name="RemoveIniFile">
@@ -4557,8 +4553,6 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="S255">ISComments</col>
 		<col def="S255">ISShortcutName</col>
 		<col def="I4">ISAttributes</col>
-		<row><td>NewShortcut1</td><td>DesktopFolder</td><td>##ID_STRING3##</td><td>Findit.Primary_output</td><td>AlwaysInstall</td><td/><td/><td/><td/><td/><td>1</td><td/><td/><td/><td/><td/><td/><td/><td/></row>
-		<row><td>NewShortcut11</td><td>findit1</td><td>##ID_STRING3##</td><td>Findit.Primary_output</td><td>AlwaysInstall</td><td/><td/><td/><td/><td/><td>1</td><td/><td/><td/><td/><td/><td/><td/><td/></row>
 	</table>
 
 	<table name="Signature">
@@ -4689,7 +4683,6 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="I2">Sequence</col>
 		<col def="L255">Command</col>
 		<col def="L255">Argument</col>
-		<row><td>fit</td><td>open</td><td/><td/><td/></row>
 	</table>
 
 	<table name="_Validation">

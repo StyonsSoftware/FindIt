@@ -39,12 +39,15 @@ namespace Findit
         private void Config_Load(object sender, EventArgs e)
         {
             LoadCurrentPreferences();
+            lblRecommendThreadCount.Text = "Recommended: " + Globals.RecommendedSearchThreadCount;
         }
 
         private void LoadCurrentPreferences()
         {
             txbCustomEditorExe.Text = gp.CustomEditorExe;
             cbRunSearchAfterLoad.Checked = gp.RunSearchesAfterLoad;
+            tbarThreadCount.Value = gp.SearchThreadCount;
+            RefreshThreadCountLabel();
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
@@ -92,6 +95,27 @@ namespace Findit
                 txbCustomEditorExe.BackColor = Color.Yellow;
                 lblInvalidNotice.Visible = true;
             }
+        }
+
+        private void RefreshThreadCountLabel()
+        {
+            lblSelectedThreadCount.Text = tbarThreadCount.Value.ToString();
+            if (tbarThreadCount.Value > Globals.RecommendedSearchThreadCount)
+            {
+                lblSelectedThreadCount.ForeColor = Color.Red;
+                lblRecommendThreadCount.ForeColor = Color.Red;
+            }
+            else
+            {
+                lblSelectedThreadCount.ForeColor = Color.Black;
+                lblRecommendThreadCount.ForeColor = Color.Black;
+            }
+            gp.SearchThreadCount = tbarThreadCount.Value;
+        }
+
+        private void tbarThreadCount_ValueChanged(object sender, EventArgs e)
+        {
+            RefreshThreadCountLabel();
         }
     }
 }

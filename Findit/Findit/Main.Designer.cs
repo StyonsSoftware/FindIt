@@ -73,6 +73,8 @@
             this.openFileInCustomEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rtbExcerpt = new System.Windows.Forms.RichTextBox();
             this.panLabel = new System.Windows.Forms.Panel();
+            this.lblStats = new System.Windows.Forms.Label();
+            this.pbar = new System.Windows.Forms.ProgressBar();
             this.lblCrippled = new System.Windows.Forms.Label();
             this.lblProgress = new System.Windows.Forms.Label();
             this.lblSrchRes = new System.Windows.Forms.Label();
@@ -91,6 +93,10 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.registerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.lblLPS = new System.Windows.Forms.Label();
+            this.lblFPS = new System.Windows.Forms.Label();
+            this.lblLPSValue = new System.Windows.Forms.Label();
+            this.lblFPSValue = new System.Windows.Forms.Label();
             this.panTop.SuspendLayout();
             this.grbBasicOptions.SuspendLayout();
             this.tabctlSearchOptions.SuspendLayout();
@@ -131,7 +137,7 @@
             this.btnSearch.Font = new System.Drawing.Font("Calibri", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnSearch.Image = global::Findit.Properties.Resources.Search;
             this.btnSearch.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnSearch.Location = new System.Drawing.Point(773, 0);
+            this.btnSearch.Location = new System.Drawing.Point(1105, 0);
             this.btnSearch.Margin = new System.Windows.Forms.Padding(4);
             this.btnSearch.Name = "btnSearch";
             this.btnSearch.Size = new System.Drawing.Size(173, 81);
@@ -147,9 +153,9 @@
             this.btnTogglePreview.Dock = System.Windows.Forms.DockStyle.Right;
             this.btnTogglePreview.Image = ((System.Drawing.Image)(resources.GetObject("btnTogglePreview.Image")));
             this.btnTogglePreview.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnTogglePreview.Location = new System.Drawing.Point(893, 0);
+            this.btnTogglePreview.Location = new System.Drawing.Point(1225, 0);
             this.btnTogglePreview.Name = "btnTogglePreview";
-            this.btnTogglePreview.Size = new System.Drawing.Size(53, 39);
+            this.btnTogglePreview.Size = new System.Drawing.Size(53, 80);
             this.btnTogglePreview.TabIndex = 1;
             this.btnTogglePreview.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.toolTip1.SetToolTip(this.btnTogglePreview, "Toggle preview");
@@ -296,7 +302,7 @@
             this.panTop.Location = new System.Drawing.Point(0, 24);
             this.panTop.Margin = new System.Windows.Forms.Padding(4);
             this.panTop.Name = "panTop";
-            this.panTop.Size = new System.Drawing.Size(946, 239);
+            this.panTop.Size = new System.Drawing.Size(1278, 239);
             this.panTop.TabIndex = 0;
             // 
             // grbBasicOptions
@@ -308,7 +314,7 @@
             this.grbBasicOptions.Margin = new System.Windows.Forms.Padding(4);
             this.grbBasicOptions.Name = "grbBasicOptions";
             this.grbBasicOptions.Padding = new System.Windows.Forms.Padding(4);
-            this.grbBasicOptions.Size = new System.Drawing.Size(946, 239);
+            this.grbBasicOptions.Size = new System.Drawing.Size(1278, 239);
             this.grbBasicOptions.TabIndex = 0;
             this.grbBasicOptions.TabStop = false;
             this.grbBasicOptions.Text = "Search options";
@@ -323,13 +329,17 @@
             this.tabctlSearchOptions.Location = new System.Drawing.Point(4, 23);
             this.tabctlSearchOptions.Name = "tabctlSearchOptions";
             this.tabctlSearchOptions.SelectedIndex = 0;
-            this.tabctlSearchOptions.Size = new System.Drawing.Size(938, 212);
+            this.tabctlSearchOptions.Size = new System.Drawing.Size(1270, 212);
             this.tabctlSearchOptions.TabIndex = 0;
             this.tabctlSearchOptions.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.tabctlSearchOptions_DrawItem);
             // 
             // tpgBasic
             // 
             this.tpgBasic.BackColor = System.Drawing.SystemColors.Control;
+            this.tpgBasic.Controls.Add(this.lblFPSValue);
+            this.tpgBasic.Controls.Add(this.lblLPSValue);
+            this.tpgBasic.Controls.Add(this.lblFPS);
+            this.tpgBasic.Controls.Add(this.lblLPS);
             this.tpgBasic.Controls.Add(this.button1);
             this.tpgBasic.Controls.Add(this.txbKeyToValidate);
             this.tpgBasic.Controls.Add(this.btnCheckKey);
@@ -346,7 +356,7 @@
             this.tpgBasic.Location = new System.Drawing.Point(4, 27);
             this.tpgBasic.Name = "tpgBasic";
             this.tpgBasic.Padding = new System.Windows.Forms.Padding(3);
-            this.tpgBasic.Size = new System.Drawing.Size(930, 181);
+            this.tpgBasic.Size = new System.Drawing.Size(1262, 181);
             this.tpgBasic.TabIndex = 0;
             this.tpgBasic.Text = "Basic options";
             // 
@@ -522,7 +532,7 @@
             this.panMid.Location = new System.Drawing.Point(0, 263);
             this.panMid.Margin = new System.Windows.Forms.Padding(4);
             this.panMid.Name = "panMid";
-            this.panMid.Size = new System.Drawing.Size(946, 315);
+            this.panMid.Size = new System.Drawing.Size(1278, 315);
             this.panMid.TabIndex = 0;
             // 
             // splitCont
@@ -626,6 +636,8 @@
             // 
             // panLabel
             // 
+            this.panLabel.Controls.Add(this.lblStats);
+            this.panLabel.Controls.Add(this.pbar);
             this.panLabel.Controls.Add(this.lblCrippled);
             this.panLabel.Controls.Add(this.lblProgress);
             this.panLabel.Controls.Add(this.btnTogglePreview);
@@ -634,8 +646,24 @@
             this.panLabel.Location = new System.Drawing.Point(0, 0);
             this.panLabel.Margin = new System.Windows.Forms.Padding(4);
             this.panLabel.Name = "panLabel";
-            this.panLabel.Size = new System.Drawing.Size(946, 39);
+            this.panLabel.Size = new System.Drawing.Size(1278, 80);
             this.panLabel.TabIndex = 1;
+            // 
+            // lblStats
+            // 
+            this.lblStats.AutoSize = true;
+            this.lblStats.Location = new System.Drawing.Point(729, 38);
+            this.lblStats.Name = "lblStats";
+            this.lblStats.Size = new System.Drawing.Size(0, 18);
+            this.lblStats.TabIndex = 6;
+            // 
+            // pbar
+            // 
+            this.pbar.Location = new System.Drawing.Point(7, 38);
+            this.pbar.Name = "pbar";
+            this.pbar.Size = new System.Drawing.Size(715, 23);
+            this.pbar.TabIndex = 5;
+            this.pbar.Click += new System.EventHandler(this.pbar_Click);
             // 
             // lblCrippled
             // 
@@ -681,12 +709,12 @@
             this.panBottom.Location = new System.Drawing.Point(0, 497);
             this.panBottom.Margin = new System.Windows.Forms.Padding(4);
             this.panBottom.Name = "panBottom";
-            this.panBottom.Size = new System.Drawing.Size(946, 81);
+            this.panBottom.Size = new System.Drawing.Size(1278, 81);
             this.panBottom.TabIndex = 2;
             // 
             // timerRefreshGUI
             // 
-            this.timerRefreshGUI.Interval = 500;
+            this.timerRefreshGUI.Interval = 250;
             this.timerRefreshGUI.Tick += new System.EventHandler(this.timerRefreshGUI_Tick);
             // 
             // menuStrip1
@@ -697,7 +725,7 @@
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(946, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1278, 24);
             this.menuStrip1.TabIndex = 3;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -796,11 +824,51 @@
             this.registerToolStripMenuItem.Text = "Register...";
             this.registerToolStripMenuItem.Click += new System.EventHandler(this.registerToolStripMenuItem_Click);
             // 
+            // lblLPS
+            // 
+            this.lblLPS.AutoSize = true;
+            this.lblLPS.Location = new System.Drawing.Point(1031, 43);
+            this.lblLPS.Name = "lblLPS";
+            this.lblLPS.Size = new System.Drawing.Size(33, 18);
+            this.lblLPS.TabIndex = 25;
+            this.lblLPS.Text = "LPS:";
+            this.lblLPS.Visible = false;
+            // 
+            // lblFPS
+            // 
+            this.lblFPS.AutoSize = true;
+            this.lblFPS.Location = new System.Drawing.Point(1030, 70);
+            this.lblFPS.Name = "lblFPS";
+            this.lblFPS.Size = new System.Drawing.Size(34, 18);
+            this.lblFPS.TabIndex = 26;
+            this.lblFPS.Text = "FPS:";
+            this.lblFPS.Visible = false;
+            // 
+            // lblLPSValue
+            // 
+            this.lblLPSValue.AutoSize = true;
+            this.lblLPSValue.Location = new System.Drawing.Point(1071, 43);
+            this.lblLPSValue.Name = "lblLPSValue";
+            this.lblLPSValue.Size = new System.Drawing.Size(15, 18);
+            this.lblLPSValue.TabIndex = 27;
+            this.lblLPSValue.Text = "0";
+            this.lblLPSValue.Visible = false;
+            // 
+            // lblFPSValue
+            // 
+            this.lblFPSValue.AutoSize = true;
+            this.lblFPSValue.Location = new System.Drawing.Point(1071, 70);
+            this.lblFPSValue.Name = "lblFPSValue";
+            this.lblFPSValue.Size = new System.Drawing.Size(15, 18);
+            this.lblFPSValue.TabIndex = 28;
+            this.lblFPSValue.Text = "0";
+            this.lblFPSValue.Visible = false;
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(946, 578);
+            this.ClientSize = new System.Drawing.Size(1278, 578);
             this.Controls.Add(this.panBottom);
             this.Controls.Add(this.panMid);
             this.Controls.Add(this.panTop);
@@ -900,6 +968,12 @@
         private System.Windows.Forms.Button btnCheckKey;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.CheckBox cbIncludeOffice;
+        private System.Windows.Forms.ProgressBar pbar;
+        private System.Windows.Forms.Label lblStats;
+        private System.Windows.Forms.Label lblFPS;
+        private System.Windows.Forms.Label lblLPS;
+        private System.Windows.Forms.Label lblFPSValue;
+        private System.Windows.Forms.Label lblLPSValue;
 
     }
 }
