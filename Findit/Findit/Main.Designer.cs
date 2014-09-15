@@ -48,6 +48,10 @@
             this.grbBasicOptions = new System.Windows.Forms.GroupBox();
             this.tabctlSearchOptions = new System.Windows.Forms.TabControl();
             this.tpgBasic = new System.Windows.Forms.TabPage();
+            this.lblFPSValue = new System.Windows.Forms.Label();
+            this.lblLPSValue = new System.Windows.Forms.Label();
+            this.lblFPS = new System.Windows.Forms.Label();
+            this.lblLPS = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.txbKeyToValidate = new System.Windows.Forms.TextBox();
             this.btnCheckKey = new System.Windows.Forms.Button();
@@ -93,10 +97,6 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.registerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.lblLPS = new System.Windows.Forms.Label();
-            this.lblFPS = new System.Windows.Forms.Label();
-            this.lblLPSValue = new System.Windows.Forms.Label();
-            this.lblFPSValue = new System.Windows.Forms.Label();
             this.panTop.SuspendLayout();
             this.grbBasicOptions.SuspendLayout();
             this.tabctlSearchOptions.SuspendLayout();
@@ -150,12 +150,13 @@
             // 
             // btnTogglePreview
             // 
-            this.btnTogglePreview.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btnTogglePreview.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.btnTogglePreview.Image = ((System.Drawing.Image)(resources.GetObject("btnTogglePreview.Image")));
             this.btnTogglePreview.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnTogglePreview.Location = new System.Drawing.Point(1225, 0);
             this.btnTogglePreview.Name = "btnTogglePreview";
-            this.btnTogglePreview.Size = new System.Drawing.Size(53, 80);
+            this.btnTogglePreview.Size = new System.Drawing.Size(53, 56);
             this.btnTogglePreview.TabIndex = 1;
             this.btnTogglePreview.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.toolTip1.SetToolTip(this.btnTogglePreview, "Toggle preview");
@@ -360,6 +361,46 @@
             this.tpgBasic.TabIndex = 0;
             this.tpgBasic.Text = "Basic options";
             // 
+            // lblFPSValue
+            // 
+            this.lblFPSValue.AutoSize = true;
+            this.lblFPSValue.Location = new System.Drawing.Point(1071, 70);
+            this.lblFPSValue.Name = "lblFPSValue";
+            this.lblFPSValue.Size = new System.Drawing.Size(15, 18);
+            this.lblFPSValue.TabIndex = 28;
+            this.lblFPSValue.Text = "0";
+            this.lblFPSValue.Visible = false;
+            // 
+            // lblLPSValue
+            // 
+            this.lblLPSValue.AutoSize = true;
+            this.lblLPSValue.Location = new System.Drawing.Point(1071, 43);
+            this.lblLPSValue.Name = "lblLPSValue";
+            this.lblLPSValue.Size = new System.Drawing.Size(15, 18);
+            this.lblLPSValue.TabIndex = 27;
+            this.lblLPSValue.Text = "0";
+            this.lblLPSValue.Visible = false;
+            // 
+            // lblFPS
+            // 
+            this.lblFPS.AutoSize = true;
+            this.lblFPS.Location = new System.Drawing.Point(1030, 70);
+            this.lblFPS.Name = "lblFPS";
+            this.lblFPS.Size = new System.Drawing.Size(34, 18);
+            this.lblFPS.TabIndex = 26;
+            this.lblFPS.Text = "FPS:";
+            this.lblFPS.Visible = false;
+            // 
+            // lblLPS
+            // 
+            this.lblLPS.AutoSize = true;
+            this.lblLPS.Location = new System.Drawing.Point(1031, 43);
+            this.lblLPS.Name = "lblLPS";
+            this.lblLPS.Size = new System.Drawing.Size(33, 18);
+            this.lblLPS.TabIndex = 25;
+            this.lblLPS.Text = "LPS:";
+            this.lblLPS.Visible = false;
+            // 
             // button1
             // 
             this.button1.Location = new System.Drawing.Point(262, 127);
@@ -476,7 +517,7 @@
             this.tpgAdvanced.Location = new System.Drawing.Point(4, 27);
             this.tpgAdvanced.Name = "tpgAdvanced";
             this.tpgAdvanced.Padding = new System.Windows.Forms.Padding(3);
-            this.tpgAdvanced.Size = new System.Drawing.Size(930, 181);
+            this.tpgAdvanced.Size = new System.Drawing.Size(1262, 181);
             this.tpgAdvanced.TabIndex = 1;
             this.tpgAdvanced.Text = "Advanced options";
             // 
@@ -652,16 +693,19 @@
             // lblStats
             // 
             this.lblStats.AutoSize = true;
-            this.lblStats.Location = new System.Drawing.Point(729, 38);
+            this.lblStats.Font = new System.Drawing.Font("Calibri", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblStats.ForeColor = System.Drawing.SystemColors.HotTrack;
+            this.lblStats.Location = new System.Drawing.Point(5, 41);
             this.lblStats.Name = "lblStats";
-            this.lblStats.Size = new System.Drawing.Size(0, 18);
+            this.lblStats.Size = new System.Drawing.Size(0, 13);
             this.lblStats.TabIndex = 6;
             // 
             // pbar
             // 
-            this.pbar.Location = new System.Drawing.Point(7, 38);
+            this.pbar.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.pbar.Location = new System.Drawing.Point(0, 57);
             this.pbar.Name = "pbar";
-            this.pbar.Size = new System.Drawing.Size(715, 23);
+            this.pbar.Size = new System.Drawing.Size(1278, 23);
             this.pbar.TabIndex = 5;
             this.pbar.Click += new System.EventHandler(this.pbar_Click);
             // 
@@ -823,46 +867,6 @@
             this.registerToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
             this.registerToolStripMenuItem.Text = "Register...";
             this.registerToolStripMenuItem.Click += new System.EventHandler(this.registerToolStripMenuItem_Click);
-            // 
-            // lblLPS
-            // 
-            this.lblLPS.AutoSize = true;
-            this.lblLPS.Location = new System.Drawing.Point(1031, 43);
-            this.lblLPS.Name = "lblLPS";
-            this.lblLPS.Size = new System.Drawing.Size(33, 18);
-            this.lblLPS.TabIndex = 25;
-            this.lblLPS.Text = "LPS:";
-            this.lblLPS.Visible = false;
-            // 
-            // lblFPS
-            // 
-            this.lblFPS.AutoSize = true;
-            this.lblFPS.Location = new System.Drawing.Point(1030, 70);
-            this.lblFPS.Name = "lblFPS";
-            this.lblFPS.Size = new System.Drawing.Size(34, 18);
-            this.lblFPS.TabIndex = 26;
-            this.lblFPS.Text = "FPS:";
-            this.lblFPS.Visible = false;
-            // 
-            // lblLPSValue
-            // 
-            this.lblLPSValue.AutoSize = true;
-            this.lblLPSValue.Location = new System.Drawing.Point(1071, 43);
-            this.lblLPSValue.Name = "lblLPSValue";
-            this.lblLPSValue.Size = new System.Drawing.Size(15, 18);
-            this.lblLPSValue.TabIndex = 27;
-            this.lblLPSValue.Text = "0";
-            this.lblLPSValue.Visible = false;
-            // 
-            // lblFPSValue
-            // 
-            this.lblFPSValue.AutoSize = true;
-            this.lblFPSValue.Location = new System.Drawing.Point(1071, 70);
-            this.lblFPSValue.Name = "lblFPSValue";
-            this.lblFPSValue.Size = new System.Drawing.Size(15, 18);
-            this.lblFPSValue.TabIndex = 28;
-            this.lblFPSValue.Text = "0";
-            this.lblFPSValue.Visible = false;
             // 
             // frmMain
             // 

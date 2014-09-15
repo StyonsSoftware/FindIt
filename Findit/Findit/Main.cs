@@ -228,6 +228,8 @@ namespace Findit
                 searchers[i].SearchResultCount = 0;
                 Array.Resize(ref searchers[i].SearchResults, 0);
             }
+            pbar.Value = 0;
+            lblStats.Text = string.Empty;
         }
 
         private void ResetSearchLookups()
@@ -493,7 +495,6 @@ namespace Findit
             btnCancel.Enabled = !btnSearch.Enabled;
             RefreshProgressBar();
             //RefreshPSLabels();
-            Application.DoEvents();
         }
 
         private void RefreshPSLabels()
@@ -513,20 +514,25 @@ namespace Findit
 
         private void RefreshProgressBar()
         {
-            int fileCount = 0;
-            foreach(FileQueue fq in Globals.processorQueues)
-            {
-                fileCount += fq.filesToSearch.Count;
-            }
-            pbar.Maximum = fileCount;
             int filesSearched = 0;
             foreach (Grepper g in searchers)
             {
                 filesSearched += g.perfStats.TotalFilesProcessed;
             }
+            int fileCount = 0;
+            foreach (FileQueue fq in Globals.processorQueues)
+            {
+                fileCount += fq.filesToSearch.Count;
+            }
 
+            pbar.Maximum = fileCount;
             pbar.Value = Math.Min(filesSearched,fileCount);
-            lblStats.Text = filesSearched.ToString() + " of " + fileCount.ToString() + " files checked";
+            lblStats.Text = filesSearched.ToString() + " of " + (fileCount==0?"[computing...]":fileCount.ToString()) + " files checked";
+
+            int remainingFileCount = fileCount - filesSearched;
+            int fps = (int)Math.Round(filesSearched / ElapsedSeconds);
+            float remainingSeconds = remainingFileCount / fps;
+            lblStats.Text += " (" + remainingSeconds.ToString("#,###,##0") + " seconds remain)";
         }
 
         private PerfStat AggregatePerformanceStats()
@@ -546,6 +552,7 @@ namespace Findit
 
         private void timerRefreshGUI_Tick(object sender, EventArgs e)
         {
+            ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
             RefreshGUI();
         }
 
@@ -1390,7 +1397,7 @@ namespace Findit
         private void pbar_Click(object sender, EventArgs e)
         {
             return;
-            ShowDebugInfo();
+            //ShowDebugInfo();
         }
 
         private void ShowDebugInfo()
