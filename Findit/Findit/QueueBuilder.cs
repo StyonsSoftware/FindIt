@@ -11,11 +11,13 @@ namespace Findit
     {        
         private int _searchThreadCount = 0;
         private string[] _filePatternsToMatch = {};
+        private string[] _filePatternsToExclude = { };
         private string[] _rootFoldersToSearch = { };
         private string _currentFolder = String.Empty;
+        private bool _recurse;
         
         //constructor
-        public QueueBuilder(string[] rootFoldersToSearch, string[] filePatternsToMatch, int searchThreadCount)
+        public QueueBuilder(UserParameters uparms, int searchThreadCount)
         {
             //initialization
             _searchThreadCount = searchThreadCount;
@@ -24,82 +26,103 @@ namespace Findit
             {
                 processorQueues.Add(new FileQueue());
             }
-            _filePatternsToMatch = filePatternsToMatch;
-            _rootFoldersToSearch = rootFoldersToSearch;
+            _filePatternsToMatch = uparms.FileNamePatterns;
+            _filePatternsToExclude = uparms.SearchExcludeFiles;
+            _rootFoldersToSearch = uparms.SearchPaths;
             _currentFolder = _rootFoldersToSearch[0];
+            _recurse = uparms.Recurse;
+        }
+
+        private Boolean IsFileInFileList(ref List<QueuedFile> filelist, System.IO.FileInfo f)
+        {
+            foreach (QueuedFile fileelement in filelist)
+            {
+                if (fileelement.file.Name == f.Name)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void BuildQueues()
         {
-            int q = 0;
-            System.IO.DirectoryInfo folder = new System.IO.DirectoryInfo(_currentFolder);
-            if (!folder.Exists)
-            {
-                Globals.statBoard.FileFindingComplete = true;
-                return;
-            }
-            foreach (string pattern in _filePatternsToMatch)
-            {
-                System.IO.FileInfo[] files = folder.GetFiles(pattern);
-                List<QueuedFile> filesMatchingThisPattern = new List<QueuedFile>();
-                foreach (System.IO.FileInfo f in files)
-                {
-                    QueuedFile qf = new QueuedFile();
-                    qf.file = f;
-                    qf.HasBeenSearched = false;
-                    filesMatchingThisPattern.Add(qf);
-                }
-
-                for(int i = 0; i < filesMatchingThisPattern.Count; ++i)
-                {
-                    q = (q > _searchThreadCount - 1 ? 0 : q);
-                    Globals.processorQueues[q++].filesToSearch.Add(filesMatchingThisPattern[i]);
-                }
-            }
-
-            //now we have the full list of all files in this folder.  move on to sub-folders (if any).
-            foreach (System.IO.DirectoryInfo subFolder in folder.GetDirectories())
-            {
-                _currentFolder = subFolder.FullName;
-                BuildQueuesWithoutFinish();
-            }
-
-            Globals.statBoard.FileFindingComplete = true;
+            //BuildQueues has no args because it has to be threadable.
+            BuildQueuesWithStartPoint(0,true);
         }
 
-        public void BuildQueuesWithoutFinish(int q = 0)
+        private void BuildQueuesWithStartPoint(int q = 0, bool root = false)
         {
             if(Globals.statBoard.Halt)
             {
                 return;
             }
+
             System.IO.DirectoryInfo folder = new System.IO.DirectoryInfo(_currentFolder);
+
+            if (!folder.Exists)
+            {
+                Globals.statBoard.FileFindingComplete = true;
+                return;
+            }
+            
+            List<QueuedFile> excludeFiles = new List<QueuedFile>();
+            if (_filePatternsToExclude != null)
+            {
+                foreach (string pattern in _filePatternsToExclude)
+                {
+                    System.IO.FileInfo[] files = folder.GetFiles(pattern);
+
+                    foreach (System.IO.FileInfo f in files)
+                    {
+                        QueuedFile qf = new QueuedFile();
+                        qf.file = f;
+                        qf.HasBeenSearched = false;
+                        excludeFiles.Add(qf);
+                    }
+                }
+            }
+
+            List<QueuedFile> includeFiles = new List<QueuedFile>();
             foreach (string pattern in _filePatternsToMatch)
             {
                 System.IO.FileInfo[] files = folder.GetFiles(pattern);
-                List<QueuedFile> filesMatchingThisPattern = new List<QueuedFile>();
-                foreach(System.IO.FileInfo f in files)
+            
+                foreach (System.IO.FileInfo f in files)
                 {
-                    QueuedFile qf = new QueuedFile();
-                    qf.file = f;
-                    qf.HasBeenSearched = false;
-                    filesMatchingThisPattern.Add(qf);
+                    if (!IsFileInFileList(ref excludeFiles, f))
+                    {
+                        QueuedFile qf = new QueuedFile();
+                        qf.file = f;
+                        qf.HasBeenSearched = false;
+                        includeFiles.Add(qf);
+                    }
                 }
-                for (int i = 0; i < filesMatchingThisPattern.Count; ++i)
+
+                for(int i = 0; i < includeFiles.Count; ++i)
                 {
                     q = (q > _searchThreadCount - 1 ? 0 : q);
-                    Globals.processorQueues[q++].filesToSearch.Add(filesMatchingThisPattern[i]);
+                    Globals.processorQueues[q++].filesToSearch.Add(includeFiles[i]);
+                    Globals.statBoard.FilesToBeSearchedCount++;
                 }
             }
 
             //now we have the full list of all files in this folder.  move on to sub-folders (if any).
             foreach (System.IO.DirectoryInfo subFolder in folder.GetDirectories())
             {
+                _currentFolder = subFolder.FullName;
+
                 //passing q as a param helps balance out the queues.
                 //without that, all of the folders with small #s of files get lumped in the first few queues.
                 //for small searches it doesnt matter much, but when you encompass many 10ks of files, it adds up to a big imbalance
-                _currentFolder = subFolder.FullName;
-                BuildQueuesWithoutFinish(q);  //recursive
+                if (_recurse)
+                {
+                    BuildQueuesWithStartPoint(q);  //recursive
+                }
+            }
+            if (root)
+            {
+                Globals.statBoard.FileFindingComplete = true;
             }
         }
     }

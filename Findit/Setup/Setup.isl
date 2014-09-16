@@ -3758,7 +3758,7 @@
 		<row><td>IDS__TargetReq_DESC_PROCESSOR</td><td>1033</td><td>The processor is not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
 		<row><td>IDS__TargetReq_DESC_RAM</td><td>1033</td><td>The amount of RAM is not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
-		<row><td>ID_STRING1</td><td>1033</td><td>http://www.JosephStyons.com</td><td>0</td><td/><td>1956803521</td></row>
+		<row><td>ID_STRING1</td><td>1033</td><td>https://findit.codeplex.com/</td><td>0</td><td/><td>2091047663</td></row>
 		<row><td>ID_STRING2</td><td>1033</td><td>Joseph Styons</td><td>0</td><td/><td>1956803521</td></row>
 		<row><td>ID_STRING3</td><td>1033</td><td>FindIt</td><td>0</td><td/><td>-736032607</td></row>
 		<row><td>ID_STRING4</td><td>1033</td><td>FindIt</td><td>0</td><td/><td>-735937268</td></row>

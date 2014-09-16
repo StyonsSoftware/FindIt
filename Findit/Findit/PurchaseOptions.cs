@@ -53,6 +53,11 @@ namespace Findit
             regForm.StartPosition = FormStartPosition.CenterParent;
             regForm.ShowDialog();
             SetRegistrationMessages();
+            Registration regInfo = new Registration();
+            if (regInfo.PaidFor())
+            {
+                Close();
+            }
         }
 
         private void btnCancel_Click(object sender, EventArgs e)

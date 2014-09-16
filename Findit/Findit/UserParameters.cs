@@ -13,7 +13,7 @@ namespace Findit
         public string[] SearchPaths;
         public string[] SearchStrings;
         public string[] FileNamePatterns;
-        public string SearchExcludeFiles;
+        public string[] SearchExcludeFiles;
         public Boolean IncludeLineNumbers;
         public Boolean Recurse;
         public Boolean CaseSensitive;

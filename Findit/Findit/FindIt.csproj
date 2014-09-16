@@ -112,6 +112,7 @@
       <DependentUpon>Diagnostics.cs</DependentUpon>
     </Compile>
     <Compile Include="FileFinder.cs" />
+    <Compile Include="FileMatchLines.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Grepper.cs" />
     <Compile Include="GUIPreferences.cs" />
@@ -225,7 +226,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"$(ProjectDir)\postbuild.bat"</PostBuildEvent>
+    <PostBuildEvent>::"$(ProjectDir)\postbuild.bat"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -24,6 +24,7 @@ namespace Findit
         private QueueBuilder qb;
         Grepper[] searchers = { };
         System.Diagnostics.Stopwatch Swatch = new System.Diagnostics.Stopwatch();
+        public List<FileMatchLines> listBoxFiles = new List<FileMatchLines>();
 
         public frmMain()
         {
@@ -230,6 +231,7 @@ namespace Findit
             }
             pbar.Value = 0;
             lblStats.Text = string.Empty;
+            listBoxFiles.Clear();
         }
 
         private void ResetSearchLookups()
@@ -263,7 +265,19 @@ namespace Findit
             searchextensions[0] = txbFileType.Text;
             result.FileNamePatterns = searchextensions;
 
-            result.SearchExcludeFiles = txbFileExclude.Text;
+            //TODO: the engine supports multiple file patterns.  update the UI to surface that feature.
+            if(0==txbFileExclude.Text.Trim().Length)
+            {
+                result.SearchExcludeFiles = null;
+            }
+            else
+            {
+                string[] searchexcludefilters = { };
+                Array.Resize(ref searchexcludefilters, 1);
+                searchexcludefilters[0] = txbFileExclude.Text;
+                result.SearchExcludeFiles = searchexcludefilters;                
+            }
+
             result.ShowPerfStats = cbPerfStats.Checked;
             result.AbsentStrings = rtbExcludes.Lines;
             result.Crippled = g_Crippled;
@@ -290,7 +304,7 @@ namespace Findit
                 searchers[i] = new Grepper(up, i);
             }
 
-            qb = new QueueBuilder(up.SearchPaths, up.FileNamePatterns, searchThreadCount);
+            qb = new QueueBuilder(up, searchThreadCount);
             System.Threading.Thread queueBuilderThread = new System.Threading.Thread(qb.BuildQueues);
             queueBuilderThread.IsBackground = true;
             Swatch.Reset();
@@ -317,6 +331,7 @@ namespace Findit
 
             while (SearchIsActive())
             {
+                lblProgress.Text = Globals.statBoard.LastSearchedFolder;
                 System.Threading.Thread.Sleep(0);
                 Application.DoEvents();
             }
@@ -412,11 +427,11 @@ namespace Findit
                     {
                         if (up.IncludeLineNumbers)
                         {
-                            writeoutput(searchers[i].SearchResults[j].FileName + " @ " + searchers[i].SearchResults[j].LineNumber.ToString());
+                            writeoutput(searchers[i].SearchResults[j].FileName + " @ " + searchers[i].SearchResults[j].LineNumber.ToString(), searchers[i].SearchResults[j].LineNumber);
                         }
                         else
                         {
-                            writeoutput(searchers[i].SearchResults[j].FileName);
+                            writeoutput(searchers[i].SearchResults[j].FileName, searchers[i].SearchResults[j].LineNumber);
                         }
                     }
                 }
@@ -479,6 +494,7 @@ namespace Findit
                 lblProgress.Text = Globals.statBoard.LastSearchedFolder;
                 lblCrippled.Visible = g_Crippled;
                 btnClear.Enabled = false;
+                RefreshProgressBar(false);
             }
             else
             {
@@ -490,14 +506,14 @@ namespace Findit
                 lblProgress.Text = "Search complete!";
                 lblCrippled.Visible = false;
                 btnClear.Enabled = true;
+                RefreshProgressBar(true);
             }
             SetEnabledStatesDuringSearch(!btnSearch.Enabled);
             btnCancel.Enabled = !btnSearch.Enabled;
-            RefreshProgressBar();
             //RefreshPSLabels();
         }
 
-        private void RefreshPSLabels()
+        private void RefreshPerSecondLabels()
         {
             ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
             PerfStat ps = AggregatePerformanceStats();
@@ -512,27 +528,22 @@ namespace Findit
             lblLPSValue.Text = lps.ToString("###,###,##0");
         }
 
-        private void RefreshProgressBar()
+        private void RefreshProgressBar(bool final)
         {
             int filesSearched = 0;
-            foreach (Grepper g in searchers)
+            if (final)
             {
-                filesSearched += g.perfStats.TotalFilesProcessed;
+                foreach (Grepper g in searchers)
+                {
+                    filesSearched += g.perfStats.TotalFilesProcessed;
+                }
+                Globals.statBoard.FilesSearched = filesSearched;
             }
-            int fileCount = 0;
-            foreach (FileQueue fq in Globals.processorQueues)
-            {
-                fileCount += fq.filesToSearch.Count;
-            }
-
-            pbar.Maximum = fileCount;
-            pbar.Value = Math.Min(filesSearched,fileCount);
-            lblStats.Text = filesSearched.ToString() + " of " + (fileCount==0?"[computing...]":fileCount.ToString()) + " files checked";
-
-            int remainingFileCount = fileCount - filesSearched;
-            int fps = (int)Math.Round(filesSearched / ElapsedSeconds);
-            float remainingSeconds = remainingFileCount / fps;
-            lblStats.Text += " (" + remainingSeconds.ToString("#,###,##0") + " seconds remain)";
+            filesSearched = Globals.statBoard.FilesSearched;
+            int filesToBeSearchedCount = Globals.statBoard.FilesToBeSearchedCount;
+            pbar.Maximum = filesToBeSearchedCount;
+            pbar.Value = Math.Min(filesSearched,filesToBeSearchedCount);
+            lblStats.Text = filesSearched.ToString() + " of " + filesToBeSearchedCount.ToString() + " files checked";
         }
 
         private PerfStat AggregatePerformanceStats()
@@ -588,9 +599,13 @@ namespace Findit
             }
         }
 
-        private void writeoutput(string WhatToWrite)
+        private void writeoutput(string WhatToWrite, Int64 LineNumber = 0)
         {
             lbResults.Items.Add(WhatToWrite);
+            FileMatchLines fml = new FileMatchLines();
+            fml.FileName = WhatToWrite;
+            fml.LineNumber = LineNumber;
+            listBoxFiles.Add(fml);
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
@@ -656,19 +671,19 @@ namespace Findit
             }
         }
 
-        private string OfficeDocumentContents(string filename)
-        {
-            System.IO.TextReader reader = new EPocalipse.IFilter.FilterReader(filename);
-            try
-            {
-                return reader.ReadToEnd();
-            }
-            finally
-            {
-                reader.Close();
-                reader.Dispose();
-            }
-        }
+        //private string OfficeDocumentContents(string filename)
+        //{
+        //    System.IO.TextReader reader = new EPocalipse.IFilter.FilterReader(filename);
+        //    try
+        //    {
+        //        return reader.ReadToEnd();
+        //    }
+        //    finally
+        //    {
+        //        reader.Close();
+        //        reader.Dispose();
+        //    }
+        //}
 
         private void PreviewTextFromOfficeDocument(ref RichTextBox rtb, string documentContents, Int64 StartPoint, Int64 EndPoint)
         {
@@ -698,7 +713,7 @@ namespace Findit
                 if((currentLine == null) || (-1 < currentLine.IndexOf("\0\0\0\0\0\0\0")))
                 {
                     rtb.Clear();
-                    string officeDocContents = OfficeDocumentContents(filename);
+                    string officeDocContents = "";// OfficeDocumentContents(filename);
                     if (0 < officeDocContents.Length)
                     {
                         PreviewTextFromOfficeDocument(ref rtb, officeDocContents, StartPoint, EndPoint);
@@ -747,14 +762,11 @@ namespace Findit
                 if (System.IO.File.Exists(selectedfname))
                 {
                     Int64 CenterOnThisLine = 0;
-                    foreach(FileQueue queue in Globals.processorQueues)
+                    for(int i = listBoxFiles.Count - 1; i > -1; i--)
                     {
-                        foreach(QueuedFile f in queue.filesToSearch)
+                        if(selectedfname == listBoxFiles[i].FileName)
                         {
-                            if(f.file.FullName.ToUpper() == selectedfname.ToUpper())
-                            {
-                                CenterOnThisLine = f.MatchLineNumber;
-                            }
+                            CenterOnThisLine = listBoxFiles[i].LineNumber;
                         }
                     }
                     RefreshExcerptPane(selectedfname, CenterOnThisLine, ref rtbExcerpt, rtbSearchTerms.Lines);

@@ -146,9 +146,11 @@ namespace Findit
                 string[] defaultPattern = { "*.*" };
                 prefs.FileNamePatterns = defaultPattern;
             }
-            if ((prefs.SearchExcludeFiles != null) && (0 == prefs.SearchExcludeFiles.Trim().Length))
+
+            if ((prefs.SearchExcludeFiles != null) && (0 == prefs.SearchExcludeFiles.Length))
             {
-                prefs.SearchExcludeFiles = "";
+                string[] defaultExcludePattern = {""};
+                prefs.SearchExcludeFiles = defaultExcludePattern;
             }
             _userPrefs = prefs;
             _threadIndex = threadIndex;
@@ -196,7 +198,7 @@ namespace Findit
                                 //ok, this file has not been searched.  search it, if possible.
                                 Int64 matchingLineNumber = -1;
                                 Int64 unmatchingLineNumber = -1;
-
+                                Globals.statBoard.FilesSearched++;
                                 Globals.statBoard.LastSearchedFolder = Globals.processorQueues[_threadIndex].filesToSearch[i].file.DirectoryName;
                                 foreach (string term in _userPrefs.SearchStrings)
                                 {
@@ -245,6 +247,7 @@ namespace Findit
                 {
                     if (!qf.HasBeenSearched)
                     {
+                        Globals.statBoard.FilesSearched++;
                         Int64 matchingLineNumber = -1;
                         Int64 unmatchingLineNumber = -1;
 
@@ -386,7 +389,7 @@ namespace Findit
                                 BinaryChecked = true;
                                 if(includeOffice && IsOfficeDocument(filename))
                                 {
-                                    return IsTextInOfficeDocument(filename, searchtext, casesensitive, includeOffice);
+                                    return -1;// IsTextInOfficeDocument(filename, searchtext, casesensitive, includeOffice);
                                 }
                                 else
                                 {

@@ -6,9 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindIt", "Findit\FindIt.csproj", "{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}"
 EndProject
 Project("{6141683F-8A12-4E36-9623-2EB02B2C2303}") = "Setup", "Setup\Setup.isproj", "{589F83C5-39E0-4E07-AC79-E3C4407910EF}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED} = {D5A04AB0-AB2C-4E60-8A7F-63500244ACED}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution

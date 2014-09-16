@@ -10,6 +10,8 @@ namespace Findit
             Array.Resize(ref GrepComplete, searchThreadCount);
         }
         public bool FileFindingComplete = false;
+        public int FilesToBeSearchedCount = 0;
+        public int FilesSearched = 0;  //many threads will be hitting this counter, so it will only be approximate until the end.
         public bool[] GrepComplete = { };
         public string LastSearchedFolder;
         public bool Halt = false;
