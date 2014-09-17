@@ -50,7 +50,7 @@ namespace Findit
                 LoadSavedSearch(cmdLineArgs[1]);
             }
 
-            ApplyLicenseRules();
+            //ApplyLicenseRules();
             SetSearchTermsWidth();
             FinishedLoading = true;
             ManuallyArrangeOutputArea();
@@ -1139,7 +1139,10 @@ namespace Findit
             PurchaseOptions regForm = new PurchaseOptions();
             regForm.StartPosition = FormStartPosition.CenterParent;
             regForm.ShowDialog();
-            SetPerformanceCrippling(!regInfo.PaidFor());
+            if (regInfo != null)
+            {
+                SetPerformanceCrippling(!regInfo.PaidFor());
+            }
         }
 
         private void AddSavedSearchToRecentSearches(string savedsearch, int maxSearches)
