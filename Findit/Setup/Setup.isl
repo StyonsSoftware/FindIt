@@ -55,7 +55,7 @@
 		<subject>FindIt</subject>
 		<author>##ID_STRING2##</author>
 		<keywords>Installer,MSI,Database</keywords>
-		<comments>Contact:  Your local administrator</comments>
+		<comments>##ID_STRING5##</comments>
 		<template>Intel;1033</template>
 		<lastauthor>Administrator</lastauthor>
 		<revnumber>{04C63AC0-BBF1-44D1-A816-750AC0E78930}</revnumber>
@@ -3758,10 +3758,13 @@
 		<row><td>IDS__TargetReq_DESC_PROCESSOR</td><td>1033</td><td>The processor is not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
 		<row><td>IDS__TargetReq_DESC_RAM</td><td>1033</td><td>The amount of RAM is not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
-		<row><td>ID_STRING1</td><td>1033</td><td>http://www.JosephStyons.com</td><td>0</td><td/><td>-1667082130</td></row>
+		<row><td>ID_STRING1</td><td>1033</td><td>http://findit.codeplex.com</td><td>0</td><td/><td>-1667065618</td></row>
 		<row><td>ID_STRING2</td><td>1033</td><td>Joseph Styons</td><td>0</td><td/><td>-1667082130</td></row>
 		<row><td>ID_STRING3</td><td>1033</td><td>FindIt</td><td>0</td><td/><td>-736032607</td></row>
 		<row><td>ID_STRING4</td><td>1033</td><td>FindIt</td><td>0</td><td/><td>-735937268</td></row>
+		<row><td>ID_STRING5</td><td>1033</td><td>Contact:  jstyons@gmail.com</td><td>0</td><td/><td>-1667090194</td></row>
+		<row><td>ID_STRING6</td><td>1033</td><td>jstyons@gmail.com</td><td>0</td><td/><td>-1667055378</td></row>
+		<row><td>ID_STRING7</td><td>1033</td><td>http://findit.codeplex.com</td><td>0</td><td/><td>-1667045138</td></row>
 		<row><td>IIDS_UITEXT_FeatureUninstalled</td><td>1033</td><td>This feature will remain uninstalled.</td><td>0</td><td/><td>-735984480</td></row>
 		<row><td>NEW_STRING1</td><td>1033</td><td>fit</td><td>0</td><td/><td>-736029408</td></row>
 	</table>
@@ -4318,10 +4321,12 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="L0">Value</col>
 		<col def="S255">ISComments</col>
 		<row><td>ALLUSERS</td><td>1</td><td/></row>
+		<row><td>ARPCONTACT</td><td>##ID_STRING6##</td><td/></row>
 		<row><td>ARPINSTALLLOCATION</td><td/><td/></row>
 		<row><td>ARPPRODUCTICON</td><td>ARPPRODUCTICON.exe</td><td/></row>
 		<row><td>ARPSIZE</td><td/><td/></row>
 		<row><td>ARPURLINFOABOUT</td><td>##ID_STRING1##</td><td/></row>
+		<row><td>ARPURLUPDATEINFO</td><td>##ID_STRING7##</td><td/></row>
 		<row><td>AgreeToLicense</td><td>No</td><td/></row>
 		<row><td>ApplicationUsers</td><td>AllUsers</td><td/></row>
 		<row><td>DWUSINTERVAL</td><td>30</td><td/></row>
