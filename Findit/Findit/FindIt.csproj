@@ -12,7 +12,8 @@
     <AssemblyName>FindIt</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <ApplicationIcon>Binoculars.ico</ApplicationIcon>
+    <ApplicationIcon>
+    </ApplicationIcon>
     <NoWin32Manifest>true</NoWin32Manifest>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -70,7 +71,8 @@
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>FindIt Key.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EPocalipse.IFilter">
@@ -93,22 +95,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AboutBox.cs">
+    <Compile Include="forms\AboutBox.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="AboutBox.Designer.cs">
+    <Compile Include="forms\AboutBox.Designer.cs">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </Compile>
-    <Compile Include="Config.cs">
+    <Compile Include="forms\Config.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Config.Designer.cs">
+    <Compile Include="forms\Config.Designer.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="Diagnostics.cs">
+    <Compile Include="forms\Diagnostics.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Diagnostics.Designer.cs">
+    <Compile Include="forms\Diagnostics.Designer.cs">
       <DependentUpon>Diagnostics.cs</DependentUpon>
     </Compile>
     <Compile Include="FileFinder.cs" />
@@ -122,10 +124,10 @@
     <Compile Include="QueueBuilder.cs" />
     <Compile Include="QueuedFile.cs" />
     <Compile Include="SearchParameters.cs" />
-    <Compile Include="Main.cs">
+    <Compile Include="forms\Main.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Main.Designer.cs">
+    <Compile Include="forms\Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
@@ -135,16 +137,16 @@
     <Compile Include="StatusBoard.cs" />
     <Compile Include="UserParameters.cs" />
     <Compile Include="Util.cs" />
-    <EmbeddedResource Include="AboutBox.resx">
+    <EmbeddedResource Include="forms\AboutBox.resx">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Config.resx">
+    <EmbeddedResource Include="forms\Config.resx">
       <DependentUpon>Config.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Diagnostics.resx">
+    <EmbeddedResource Include="forms\Diagnostics.resx">
       <DependentUpon>Diagnostics.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Main.resx">
+    <EmbeddedResource Include="forms\Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -152,10 +154,10 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="PurchaseOptions.resx">
+    <EmbeddedResource Include="forms\PurchaseOptions.resx">
       <DependentUpon>PurchaseOptions.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="RegistrationForm.resx">
+    <EmbeddedResource Include="forms\RegistrationForm.resx">
       <DependentUpon>RegistrationForm.cs</DependentUpon>
     </EmbeddedResource>
     <Compile Include="Properties\Resources.Designer.cs">
@@ -164,9 +166,6 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="app.config" />
-    <None Include="FindIt Key.pfx" />
-    <None Include="FindIt_TemporaryKey.pfx" />
-    <None Include="postbuild.bat" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -176,16 +175,16 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="PurchaseOptions.cs">
+    <Compile Include="forms\PurchaseOptions.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="PurchaseOptions.Designer.cs">
+    <Compile Include="forms\PurchaseOptions.Designer.cs">
       <DependentUpon>PurchaseOptions.cs</DependentUpon>
     </Compile>
-    <Compile Include="RegistrationForm.cs">
+    <Compile Include="forms\RegistrationForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="RegistrationForm.Designer.cs">
+    <Compile Include="forms\RegistrationForm.Designer.cs">
       <DependentUpon>RegistrationForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Registration.cs" />
@@ -195,10 +194,20 @@
     <None Include="img\Search.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Binoculars.ico" />
+    <Content Include="external dlls\EPocalipse.IFilter.dll" />
+    <Content Include="img\big_clipboard.png" />
+    <Content Include="img\Binoculars.ico" />
     <Content Include="img\buy_now.png" />
+    <Content Include="img\Cancel.png" />
+    <Content Include="img\green_check.png" />
     <Content Include="img\key.png" />
+    <Content Include="img\Left_black_delete_arrow.png" />
     <Content Include="img\little_cancel.png" />
+    <Content Include="img\Preview.png" />
+    <Content Include="img\select_row.png" />
+    <Content Include="img\tiny_edit.png" />
+    <Content Include="img\tiny_folder.png" />
+    <Content Include="img\tiny_spiral_notebook.png" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">

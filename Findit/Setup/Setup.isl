@@ -2656,7 +2656,7 @@
 		<col def="I2">Encoded</col>
 		<col def="S0">Comment</col>
 		<col def="I4">TimeStamp</col>
-		<row><td>COMPANY_NAME</td><td>1033</td><td>Joseph Styons</td><td>0</td><td/><td>1956803521</td></row>
+		<row><td>COMPANY_NAME</td><td>1033</td><td>Joseph Styons</td><td>0</td><td/><td>-1667082130</td></row>
 		<row><td>DN_AlwaysInstall</td><td>1033</td><td>Always Install</td><td>0</td><td/><td>-735984480</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_COLOR</td><td>1033</td><td>The color settings of your system are not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION40CLIENT</td><td>1033</td><td>Microsoft .NET Framework 4.0 Client Package or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td>-735929911</td></row>
@@ -3758,8 +3758,8 @@
 		<row><td>IDS__TargetReq_DESC_PROCESSOR</td><td>1033</td><td>The processor is not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
 		<row><td>IDS__TargetReq_DESC_RAM</td><td>1033</td><td>The amount of RAM is not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>-735984480</td></row>
-		<row><td>ID_STRING1</td><td>1033</td><td>https://findit.codeplex.com/</td><td>0</td><td/><td>2091047663</td></row>
-		<row><td>ID_STRING2</td><td>1033</td><td>Joseph Styons</td><td>0</td><td/><td>1956803521</td></row>
+		<row><td>ID_STRING1</td><td>1033</td><td>http://www.JosephStyons.com</td><td>0</td><td/><td>-1667082130</td></row>
+		<row><td>ID_STRING2</td><td>1033</td><td>Joseph Styons</td><td>0</td><td/><td>-1667082130</td></row>
 		<row><td>ID_STRING3</td><td>1033</td><td>FindIt</td><td>0</td><td/><td>-736032607</td></row>
 		<row><td>ID_STRING4</td><td>1033</td><td>FindIt</td><td>0</td><td/><td>-735937268</td></row>
 		<row><td>IIDS_UITEXT_FeatureUninstalled</td><td>1033</td><td>This feature will remain uninstalled.</td><td>0</td><td/><td>-735984480</td></row>
@@ -3872,7 +3872,7 @@
 		<col def="V0">Data</col>
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I2">ISIconIndex</col>
-		<row><td>ARPPRODUCTICON.exe</td><td/><td>&lt;VSSolutionFolder&gt;\Findit\Binoculars.ico</td><td>0</td></row>
+		<row><td>ARPPRODUCTICON.exe</td><td/><td>&lt;VSSolutionFolder&gt;\Findit\img\Binoculars.ico</td><td>0</td></row>
 		<row><td>_AC0B17E8_D4EF_48AA_BFB8_B96FBE737E0A</td><td/><td>D:\dev\src\petproj\Findit\Findit\Binoculars.ico</td><td>0</td></row>
 		<row><td>_B84E10B3_E29E_4738_9D17_13D2185C47A0</td><td/><td>D:\dev\src\petproj\Findit\Findit\Binoculars.ico</td><td>0</td></row>
 		<row><td>_BB688323_5A07_4C67_A030_F5F2836A6257</td><td/><td>&lt;VSSolutionFolder&gt;\Findit\Binoculars.ico</td><td>0</td></row>
@@ -4008,7 +4008,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>ISTheme</td><td>InstallShield Blue.theme</td></row>
 		<row><td>ISUSLock</td><td>{1EC43AA9-4C37-43A6-B978-7B1B3AFF7CA8}</td></row>
 		<row><td>ISUSSignature</td><td>{36B86362-ADB3-45B8-8453-D6F59BE0DFEF}</td></row>
-		<row><td>ISVisitedViews</td><td>viewAssistant,viewFileExtensions,viewProject,viewUI,viewShortcuts,viewSystemSearch,viewSupportFiles,viewRelease,viewUpgradePaths,viewISToday</td></row>
+		<row><td>ISVisitedViews</td><td>viewAssistant,viewFileExtensions,viewProject,viewUI,viewShortcuts,viewSystemSearch,viewSupportFiles,viewRelease,viewUpgradePaths,viewISToday,viewAppFiles</td></row>
 		<row><td>Limited</td><td>1</td></row>
 		<row><td>LockPermissionMode</td><td>1</td></row>
 		<row><td>MsiExecCmdLineOptions</td><td/></row>

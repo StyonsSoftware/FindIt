@@ -703,7 +703,7 @@
             // pbar
             // 
             this.pbar.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pbar.ForeColor = System.Drawing.Color.Violet;
+            this.pbar.ForeColor = System.Drawing.SystemColors.HotTrack;
             this.pbar.Location = new System.Drawing.Point(0, 57);
             this.pbar.Margin = new System.Windows.Forms.Padding(0);
             this.pbar.Name = "pbar";

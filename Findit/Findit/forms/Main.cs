@@ -339,7 +339,7 @@ namespace Findit
             RefreshGUI();
             timerRefreshGUI.Enabled = false;
             BlinkOpt bo = BlinkOptions();
-            if(bo.finish)
+            if(bo.finish && !AlreadyQuit)
             {
                 FlashWindow.Flash(this);
             }
