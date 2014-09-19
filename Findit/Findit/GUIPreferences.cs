@@ -27,6 +27,9 @@ namespace Findit
         private string[] m_RecentSearchFolders = { "" };
         private string m_CustomEditorExe = "";
         private Boolean m_RunSearchesAfterLoad = false;
+        private Boolean m_BlinkOnFirst = false;
+        private Boolean m_BlinkOnEvery = false;
+        private Boolean m_BlinkOnFinish = false;
         private int m_SearchThreadCount = 1;
 
         private const string c_RecentSavedSearches = "RecentSavedSearches";
@@ -34,6 +37,9 @@ namespace Findit
         private const string c_CustomEditorExe = "CustomEditorExe";
         private const string c_RunSearchesAfterLoad = "RunSearchesAfterLoad";
         private const string c_SearchThreadCount = "SearchThreadCount";
+        private const string c_BlinkOnFirst = "BlinkOnFirst";
+        private const string c_BlinkOnEvery = "BlinkOnEvery";
+        private const string c_BlinkOnFinish = "BlinkOnFinish";
 
         public string[] RecentSavedSearches
         {
@@ -118,6 +124,9 @@ namespace Findit
             reg.SetValue(c_CustomEditorExe, CustomEditorExe);
             reg.SetValue(c_RunSearchesAfterLoad, RunSearchesAfterLoad.ToString());
             reg.SetValue(c_SearchThreadCount, SearchThreadCount.ToString());
+            reg.SetValue(c_BlinkOnEvery, BlinkOnEvery.ToString());
+            reg.SetValue(c_BlinkOnFinish, BlinkOnFinish.ToString());
+            reg.SetValue(c_BlinkOnFirst, BlinkOnFirst.ToString());
         }
 
         public static string DefaultCustomEditor()
@@ -126,6 +135,21 @@ namespace Findit
         }
 
         public static Boolean DefaultRunSearchesAfterLoad()
+        {
+            return false;
+        }
+
+        public static Boolean DefaultBlinkOnFirst()
+        {                            
+            return false;            
+        }                            
+                                     
+        public static Boolean DefaultBlinkOnEvery()
+        {                            
+            return false;            
+        }                            
+                                     
+        public static Boolean DefaultBlinkOnFinish()
         {
             return false;
         }
@@ -179,6 +203,10 @@ namespace Findit
             int iSearchThreadCount = 0;
             int.TryParse(strThreadCount, out iSearchThreadCount);
             SearchThreadCount = iSearchThreadCount;
+            BlinkOnEvery = (reg.GetValue(c_BlinkOnEvery, DefaultBlinkOnEvery().ToString()).ToString() == true.ToString());
+            BlinkOnFinish = (reg.GetValue(c_BlinkOnFinish, DefaultBlinkOnFinish().ToString()).ToString() == true.ToString());
+            BlinkOnFirst = (reg.GetValue(c_BlinkOnFirst, DefaultBlinkOnFirst().ToString()).ToString() == true.ToString());
+
         }
 
         public override void GetObjectData(SerializationInfo info, StreamingContext ctxt)
@@ -229,6 +257,39 @@ namespace Findit
             catch
             {
                 return defaultValue;
+            }
+        }
+        public Boolean BlinkOnFirst
+        {
+            get
+            {
+                return m_BlinkOnFirst;
+            }
+            set
+            {
+                m_BlinkOnFirst = value;
+            }
+        }
+        public Boolean BlinkOnEvery
+        {
+            get
+            {
+                return m_BlinkOnEvery;
+            }
+            set
+            {
+                m_BlinkOnEvery = value;
+            }
+        }
+        public Boolean BlinkOnFinish
+        {
+            get
+            {
+                return m_BlinkOnFinish;
+            }
+            set
+            {
+                m_BlinkOnFinish = value;
             }
         }
 

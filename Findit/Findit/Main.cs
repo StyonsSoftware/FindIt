@@ -338,6 +338,11 @@ namespace Findit
             //one final printout in case we missed anything
             RefreshGUI();
             timerRefreshGUI.Enabled = false;
+            BlinkOpt bo = BlinkOptions();
+            if(bo.finish)
+            {
+                FlashWindow.Flash(this);
+            }
             
             Swatch.Stop();
             ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
@@ -606,6 +611,11 @@ namespace Findit
             fml.FileName = WhatToWrite;
             fml.LineNumber = LineNumber;
             listBoxFiles.Add(fml);
+            BlinkOpt blinks = BlinkOptions();
+            if(blinks.every || (blinks.first && 1 == lbResults.Items.Count))
+            {
+                FlashWindow.Flash(this);
+            }
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
@@ -968,6 +978,23 @@ namespace Findit
         {
             GUIPreferences gp = new GUIPreferences();
             return gp.RunSearchesAfterLoad;
+        }
+
+        private struct BlinkOpt
+        {
+            public bool first;
+            public bool every;
+            public bool finish;
+        }
+
+        private BlinkOpt BlinkOptions()
+        {
+            GUIPreferences gp = new GUIPreferences();
+            BlinkOpt result = new BlinkOpt();
+            result.every = gp.BlinkOnEvery;
+            result.finish = gp.BlinkOnFinish;
+            result.first = gp.BlinkOnFirst;
+            return result;
         }
 
         private void openEnclosingFolderToolStripMenuItem_Click(object sender, EventArgs e)

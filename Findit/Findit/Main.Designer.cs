@@ -703,9 +703,12 @@
             // pbar
             // 
             this.pbar.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.pbar.ForeColor = System.Drawing.Color.Violet;
             this.pbar.Location = new System.Drawing.Point(0, 57);
+            this.pbar.Margin = new System.Windows.Forms.Padding(0);
             this.pbar.Name = "pbar";
             this.pbar.Size = new System.Drawing.Size(1278, 23);
+            this.pbar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.pbar.TabIndex = 5;
             this.pbar.Click += new System.EventHandler(this.pbar_Click);
             // 
@@ -857,14 +860,14 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
             // registerToolStripMenuItem
             // 
             this.registerToolStripMenuItem.Name = "registerToolStripMenuItem";
-            this.registerToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.registerToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
             this.registerToolStripMenuItem.Text = "Register...";
             this.registerToolStripMenuItem.Visible = false;
             this.registerToolStripMenuItem.Click += new System.EventHandler(this.registerToolStripMenuItem_Click);

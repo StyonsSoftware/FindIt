@@ -28,6 +28,9 @@ namespace Findit
         {
             gp.CustomEditorExe = txbCustomEditorExe.Text;
             gp.RunSearchesAfterLoad = cbRunSearchAfterLoad.Checked;
+            gp.BlinkOnEvery = cbBlinkEvery.Checked;
+            gp.BlinkOnFinish = cbBlinkFinish.Checked;
+            gp.BlinkOnFirst = cbBlinkFirst.Checked;
             gp.SaveToRegistry();
         }
 
@@ -47,6 +50,9 @@ namespace Findit
             txbCustomEditorExe.Text = gp.CustomEditorExe;
             cbRunSearchAfterLoad.Checked = gp.RunSearchesAfterLoad;
             tbarThreadCount.Value = gp.SearchThreadCount;
+            cbBlinkFirst.Checked = gp.BlinkOnFirst;
+            cbBlinkFinish.Checked = gp.BlinkOnFinish;
+            cbBlinkEvery.Checked = gp.BlinkOnEvery;
             RefreshThreadCountLabel();
         }
 
@@ -116,6 +122,15 @@ namespace Findit
         private void tbarThreadCount_ValueChanged(object sender, EventArgs e)
         {
             RefreshThreadCountLabel();
+        }
+
+        private void cbBlinkEvery_CheckedChanged(object sender, EventArgs e)
+        {
+            if(cbBlinkEvery.Checked)
+            {
+                cbBlinkFirst.Checked = true;
+            }
+            cbBlinkFirst.Enabled = !cbBlinkEvery.Checked;
         }
     }
 }
