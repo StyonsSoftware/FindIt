@@ -508,14 +508,21 @@ namespace Findit
                 runSearchToolStripMenuItem.Visible = true;
                 cancelSearchToolStripMenuItem.Visible = false;
                 rtbSearchTerms.Enabled = true;
-                lblProgress.Text = "Search complete!";
+                if (0 == Globals.statBoard.UserFacingError.Length)
+                {
+                    lblProgress.Text = "Search complete!";
+                }
+                else
+                {
+                    lblProgress.Text = "Error: " + Globals.statBoard.UserFacingError;
+                }
                 lblCrippled.Visible = false;
                 btnClear.Enabled = true;
                 RefreshProgressBar(true);
             }
             SetEnabledStatesDuringSearch(!btnSearch.Enabled);
             btnCancel.Enabled = !btnSearch.Enabled;
-            //RefreshPSLabels();
+            //RefreshPSLabels();           
         }
 
         private void RefreshPerSecondLabels()

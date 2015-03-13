@@ -82,47 +82,56 @@ namespace Findit
                     }
                 }
             }
-
-            List<QueuedFile> includeFiles = new List<QueuedFile>();
-            foreach (string pattern in _filePatternsToMatch)
+            try
             {
-                System.IO.FileInfo[] files = folder.GetFiles(pattern);
-            
-                foreach (System.IO.FileInfo f in files)
+                List<QueuedFile> includeFiles = new List<QueuedFile>();
+                foreach (string pattern in _filePatternsToMatch)
                 {
-                    if (!IsFileInFileList(ref excludeFiles, f))
+
+                    System.IO.FileInfo[] files = folder.GetFiles(pattern);
+
+
+                    foreach (System.IO.FileInfo f in files)
                     {
-                        QueuedFile qf = new QueuedFile();
-                        qf.file = f;
-                        qf.HasBeenSearched = false;
-                        includeFiles.Add(qf);
+                        if (!IsFileInFileList(ref excludeFiles, f))
+                        {
+                            QueuedFile qf = new QueuedFile();
+                            qf.file = f;
+                            qf.HasBeenSearched = false;
+                            includeFiles.Add(qf);
+                        }
+                    }
+
+                    for (int i = 0; i < includeFiles.Count; ++i)
+                    {
+                        q = (q > _searchThreadCount - 1 ? 0 : q);
+                        Globals.processorQueues[q++].filesToSearch.Add(includeFiles[i]);
+                        Globals.statBoard.FilesToBeSearchedCount++;
                     }
                 }
 
-                for(int i = 0; i < includeFiles.Count; ++i)
+                //now we have the full list of all files in this folder.  move on to sub-folders (if any).
+                foreach (System.IO.DirectoryInfo subFolder in folder.GetDirectories())
                 {
-                    q = (q > _searchThreadCount - 1 ? 0 : q);
-                    Globals.processorQueues[q++].filesToSearch.Add(includeFiles[i]);
-                    Globals.statBoard.FilesToBeSearchedCount++;
+                    _currentFolder = subFolder.FullName;
+
+                    //passing q as a param helps balance out the queues.
+                    //without that, all of the folders with small #s of files get lumped in the first few queues.
+                    //for small searches it doesnt matter much, but when you encompass many 10ks of files, it adds up to a big imbalance
+                    if (_recurse)
+                    {
+                        BuildQueuesWithStartPoint(q);  //recursive
+                    }
+                }
+                if (root)
+                {
+                    Globals.statBoard.FileFindingComplete = true;
                 }
             }
-
-            //now we have the full list of all files in this folder.  move on to sub-folders (if any).
-            foreach (System.IO.DirectoryInfo subFolder in folder.GetDirectories())
-            {
-                _currentFolder = subFolder.FullName;
-
-                //passing q as a param helps balance out the queues.
-                //without that, all of the folders with small #s of files get lumped in the first few queues.
-                //for small searches it doesnt matter much, but when you encompass many 10ks of files, it adds up to a big imbalance
-                if (_recurse)
-                {
-                    BuildQueuesWithStartPoint(q);  //recursive
-                }
-            }
-            if (root)
+            catch (System.UnauthorizedAccessException unauth)
             {
                 Globals.statBoard.FileFindingComplete = true;
+                Globals.statBoard.UserFacingError = unauth.Message;
             }
         }
     }

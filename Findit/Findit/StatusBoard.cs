@@ -15,6 +15,7 @@ namespace Findit
         public bool[] GrepComplete = { };
         public string LastSearchedFolder;
         public bool Halt = false;
+        public string UserFacingError = string.Empty;
         public bool AllDone
         {
             get 
