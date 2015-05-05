@@ -43,6 +43,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Findit
@@ -186,7 +187,16 @@ namespace Findit
                     {
                         if (Globals.processorQueues[_threadIndex].filesToSearch[i] != null)
                         {
-                            string currentFilename = Globals.processorQueues[_threadIndex].filesToSearch[i].file.FullName;
+                            string currentFilename = String.Empty;
+                            try
+                            {
+                                currentFilename = Globals.processorQueues[_threadIndex].filesToSearch[i].file.FullName;
+                            }
+                            catch (System.IO.PathTooLongException)
+                            {
+                                //file names longer than 260 characters will generate this exception, which we ignore.
+                                Globals.processorQueues[_threadIndex].filesToSearch[i].HasBeenSearched = true;
+                            }
                             if(_userPrefs.OnlyFileNames)
                             {
                                 RecordPositiveMatch(currentFilename, 0);
@@ -259,7 +269,14 @@ namespace Findit
                         }
                         foreach (string term in _userPrefs.SearchStrings)
                         {
-                            matchingLineNumber = IsTextInFile(qf.file.FullName, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                            try
+                            {
+                                matchingLineNumber = IsTextInFile(qf.file.FullName, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                            }
+                            catch (System.IO.PathTooLongException)
+                            {
+                                matchingLineNumber = -1;
+                            }
                             qf.MatchLineNumber = matchingLineNumber;
                             qf.HasBeenSearched = true;
                             if (-1 == matchingLineNumber)
@@ -271,7 +288,14 @@ namespace Findit
                         //now make sure we dont have any unwanted terms
                         foreach (string term in _userPrefs.AbsentStrings)
                         {
-                            unmatchingLineNumber = IsTextInFile(qf.file.FullName, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                            try
+                            {
+                                unmatchingLineNumber = IsTextInFile(qf.file.FullName, term, _userPrefs.CaseSensitive, _userPrefs.IncludeOffice);
+                            }
+                            catch (System.IO.PathTooLongException)
+                            {
+                                matchingLineNumber = -1;
+                            }
                             if (-1 != unmatchingLineNumber)
                             {
                                 break;  //the presence of any of these terms is enough to fail.
@@ -289,6 +313,10 @@ namespace Findit
                 }
                 Globals.statBoard.GrepComplete[_threadIndex] = true;
             }
+            catch (System.IO.PathTooLongException e)
+            {
+                StoreException(e.Message);
+            }
             catch (Exception e)
             {
                 StoreException(e.Message);
@@ -297,6 +325,22 @@ namespace Findit
                     Globals.statBoard.GrepComplete[_threadIndex] = true;
                 }
             }
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public static extern int GetShortPathName(
+                 [MarshalAs(UnmanagedType.LPTStr)]
+                   string path,
+                 [MarshalAs(UnmanagedType.LPTStr)]
+                   StringBuilder shortPath,
+                 int shortPathLength
+                 );
+
+        public static string LongFileNameTo83Format(string longFileName)
+        {
+            StringBuilder shortPath = new StringBuilder(255);
+            GetShortPathName(longFileName, shortPath, shortPath.Capacity);
+            return shortPath.ToString();
         }
 
         private void RecordPositiveMatch(string currentFilename, Int64 lineNumber)
