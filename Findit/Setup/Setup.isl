@@ -1055,8 +1055,6 @@
 	<table name="CreateFolder">
 		<col key="yes" def="s72">Directory_</col>
 		<col key="yes" def="s72">Component_</col>
-		<row><td>CommonAppDataFolder</td><td>ISO19770_SystemTag</td></row>
-		<row><td>INSTALLDIR</td><td>ISO19770_LocalTag</td></row>
 		<row><td>INSTALLDIR</td><td>ISX_DEFAULTCOMPONENT1</td></row>
 	</table>
 
@@ -1891,6 +1889,8 @@
 		<col def="I4">ISAttributes</col>
 		<col def="S72">ISComponentSubFolder_</col>
 		<row><td>findit.primary_output</td><td>FindIt.Primary_output</td><td>FindIt.Primary output</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;Findit&gt;|Built</td><td>3</td><td/></row>
+		<row><td>regid.2014_08.moc.xelpedoc.t</td><td>ISO19770_SystemTag</td><td>REGID2~1.SWI|regid.2014-08.moc.xelpedoc.tidnif,1_88414EC3-386F-4F28-8CB2-89F025E114C8.swidtag</td><td>0</td><td/><td/><td/><td>1</td><td>C:\dev\src\codeplex\Findit\Setup\Setup\Express\Interm\regid.2014-08.moc.xelpedoc.tidnif,1_88414EC3-386F-4F28-8CB2-89F025E114C8.swidtag</td><td>1</td><td/></row>
+		<row><td>regid.2014_08.moc.xelpedoc.t1</td><td>ISO19770_LocalTag</td><td>REGID2~1.SWI|regid.2014-08.moc.xelpedoc.tidnif,1_88414EC3-386F-4F28-8CB2-89F025E114C8.swidtag</td><td>0</td><td/><td/><td/><td>1</td><td>C:\dev\src\codeplex\Findit\Setup\Setup\Express\Interm\regid.2014-08.moc.xelpedoc.tidnif,1_88414EC3-386F-4F28-8CB2-89F025E114C8.swidtag</td><td>1</td><td/></row>
 	</table>
 
 	<table name="FileSFPCatalog">

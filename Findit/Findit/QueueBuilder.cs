@@ -87,26 +87,31 @@ namespace Findit
                 List<QueuedFile> includeFiles = new List<QueuedFile>();
                 foreach (string pattern in _filePatternsToMatch)
                 {
-
-                    System.IO.FileInfo[] files = folder.GetFiles(pattern);
-
-
-                    foreach (System.IO.FileInfo f in files)
+                    try
                     {
-                        if (!IsFileInFileList(ref excludeFiles, f))
+                        System.IO.FileInfo[] files = folder.GetFiles(pattern);
+
+                        foreach (System.IO.FileInfo f in files)
                         {
-                            QueuedFile qf = new QueuedFile();
-                            qf.file = f;
-                            qf.HasBeenSearched = false;
-                            includeFiles.Add(qf);
+                            if (!IsFileInFileList(ref excludeFiles, f))
+                            {
+                                QueuedFile qf = new QueuedFile();
+                                qf.file = f;
+                                qf.HasBeenSearched = false;
+                                includeFiles.Add(qf);
+                            }
+                        }
+
+                        for (int i = 0; i < includeFiles.Count; ++i)
+                        {
+                            q = (q > _searchThreadCount - 1 ? 0 : q);
+                            Globals.processorQueues[q++].filesToSearch.Add(includeFiles[i]);
+                            Globals.statBoard.FilesToBeSearchedCount++;
                         }
                     }
-
-                    for (int i = 0; i < includeFiles.Count; ++i)
+                    catch
                     {
-                        q = (q > _searchThreadCount - 1 ? 0 : q);
-                        Globals.processorQueues[q++].filesToSearch.Add(includeFiles[i]);
-                        Globals.statBoard.FilesToBeSearchedCount++;
+                        //ignore exceptions here (typically a "file name too long" error
                     }
                 }
 
@@ -132,6 +137,11 @@ namespace Findit
             {
                 Globals.statBoard.FileFindingComplete = true;
                 Globals.statBoard.UserFacingError = unauth.Message;
+            }
+            catch (System.IO.PathTooLongException)
+            {
+                //Globals.statBoard.FileFindingComplete = true;
+                //Globals.statBoard.UserFacingError = toolong.Message;
             }
         }
     }
