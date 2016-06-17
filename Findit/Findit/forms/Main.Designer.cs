@@ -710,7 +710,6 @@
             this.pbar.Size = new System.Drawing.Size(1278, 23);
             this.pbar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.pbar.TabIndex = 5;
-            this.pbar.Click += new System.EventHandler(this.pbar_Click);
             // 
             // lblCrippled
             // 
@@ -724,7 +723,6 @@
             this.lblCrippled.TabIndex = 4;
             this.lblCrippled.Text = "Enter a registration key for much faster searches";
             this.lblCrippled.Visible = false;
-            this.lblCrippled.Click += new System.EventHandler(this.lblCrippled_Click);
             // 
             // lblProgress
             // 

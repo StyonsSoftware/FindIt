@@ -1,25 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindIt", "Findit\FindIt.csproj", "{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}"
 EndProject
-Project("{6141683F-8A12-4E36-9623-2EB02B2C2303}") = "Setup", "Setup\Setup.isproj", "{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}"
-EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs37
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = Findit\\FindIt.csproj
-		SccProjectName1 = Findit
-		SccLocalPath1 = Findit
-		SccProjectUniqueName2 = Setup\\Setup.isproj
-		SccProjectName2 = Setup
-		SccLocalPath2 = Setup
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CD_ROM|Any CPU = CD_ROM|Any CPU
 		Debug|Any CPU = Debug|Any CPU
@@ -38,18 +24,17 @@ Global
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.SingleImage|Any CPU.Build.0 = Release|Any CPU
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.CD_ROM|Any CPU.ActiveCfg = CD_ROM
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.CD_ROM|Any CPU.Build.0 = CD_ROM
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.Debug|Any CPU.ActiveCfg = DVD-5
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.Debug|Any CPU.Build.0 = DVD-5
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.DVD-5|Any CPU.ActiveCfg = DVD-5
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.DVD-5|Any CPU.Build.0 = DVD-5
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.Release|Any CPU.ActiveCfg = SingleImage
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.Release|Any CPU.Build.0 = SingleImage
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.SingleImage|Any CPU.ActiveCfg = SingleImage
-		{4C66BE1A-3DE2-4F10-B8E3-B0520CE56EB7}.SingleImage|Any CPU.Build.0 = SingleImage
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 2
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs37
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = Findit\\FindIt.csproj
+		SccProjectName1 = Findit
+		SccLocalPath1 = Findit
 	EndGlobalSection
 EndGlobal
