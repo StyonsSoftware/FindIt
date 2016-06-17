@@ -5,6 +5,11 @@ VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindIt", "Findit\FindIt.csproj", "{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}"
 EndProject
+Project("{6141683F-8A12-4E36-9623-2EB02B2C2303}") = "Setup", "Setup\Setup.isproj", "{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED} = {D5A04AB0-AB2C-4E60-8A7F-63500244ACED}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		CD_ROM|Any CPU = CD_ROM|Any CPU
@@ -24,17 +29,30 @@ Global
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.SingleImage|Any CPU.ActiveCfg = Release|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.SingleImage|Any CPU.Build.0 = Release|Any CPU
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.CD_ROM|Any CPU.ActiveCfg = CD_ROM
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.CD_ROM|Any CPU.Build.0 = CD_ROM
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.Debug|Any CPU.ActiveCfg = DVD-5
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.Debug|Any CPU.Build.0 = DVD-5
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.DVD-5|Any CPU.ActiveCfg = DVD-5
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.DVD-5|Any CPU.Build.0 = DVD-5
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.Release|Any CPU.ActiveCfg = SingleImage
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.Release|Any CPU.Build.0 = SingleImage
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.SingleImage|Any CPU.ActiveCfg = SingleImage
+		{688F156C-5A32-4B1B-9F8F-7CF90B2C791D}.SingleImage|Any CPU.Build.0 = SingleImage
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 2
+		SccNumberOfProjects = 3
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs37
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = Findit\\FindIt.csproj
 		SccProjectName1 = Findit
 		SccLocalPath1 = Findit
+		SccProjectUniqueName2 = Setup\\Setup.isproj
+		SccProjectName2 = Setup
+		SccLocalPath2 = Setup
 	EndGlobalSection
 EndGlobal
