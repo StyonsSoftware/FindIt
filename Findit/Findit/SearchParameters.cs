@@ -19,7 +19,7 @@ namespace Findit
     {
         private string m_SearchFolder = "";
         private string m_FileTypeFilter = "";
-        private string m_FileExcludeFilter = "";        
+        private string m_FileExcludeFilter = "";
         private bool m_IncludeLineNosInOutput = false;
         private bool m_IncludePerfStats = false;
         private bool m_CaseSensitive = false;
@@ -31,7 +31,7 @@ namespace Findit
 
         private const string c_SearchFolder = "SearchFolder";
         private const string c_FileTypeFilter = "FileTypeFilter";
-        private const string c_FileExcludeFilter = "FileExcludeFilter";        
+        private const string c_FileExcludeFilter = "FileExcludeFilter";
         private const string c_IncludeLineNosInOutput = "IncludeLineNosInOutput";
         private const string c_IncludePerfStats = "IncludePerfStats";
         private const string c_CaseSensitive = "CaseSensitive";
@@ -40,7 +40,7 @@ namespace Findit
         private const string c_IncludeOffice = "IncludeOffice";
         private const string c_SearchTerms = "SearchTerms";
         private const string c_ExcludeTerms = "ExcludeTerms";
- 
+
         public bool IncludeLineNosInOutput
         {
             get
@@ -169,18 +169,10 @@ namespace Findit
 
         public SearchParameters()
         {
-            reg = Registry.CurrentUser;
-            reg.CreateSubKey(c_RegKeyName);
-            reg = Registry.CurrentUser.OpenSubKey(c_RegKeyName, true);
-            LoadFromRegistry();
-        }
-
-        ~SearchParameters()
-        {
-            if (reg != null)
-            {
-                reg.Close();
-            }
+            //the base constructor opens the registry key and calls LoadFromRegistry.
+            //this used to do all of that a second time and overwrite the key the base had
+            //just opened, which leaked that key and read the whole of the registry twice
+            //for every single one of these that got built.
         }
 
         public override void SaveToRegistry()
@@ -315,7 +307,7 @@ namespace Findit
             info.AddValue("SearchSubfolders", this.SearchSubfolders);
             info.AddValue("OnlySearchFileNames", this.OnlySearchFileNames);
             info.AddValue("SearchTerms", this.SearchTerms);
-            info.AddValue("ExcludeTerms", this.ExcludeTerms);            
+            info.AddValue("ExcludeTerms", this.ExcludeTerms);
         }
 
         public override void Owner(SerializationInfo info, StreamingContext ctxt)

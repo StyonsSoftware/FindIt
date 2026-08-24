@@ -75,7 +75,6 @@
             this.panLabel = new System.Windows.Forms.Panel();
             this.lblStats = new System.Windows.Forms.Label();
             this.pbar = new System.Windows.Forms.ProgressBar();
-            this.lblCrippled = new System.Windows.Forms.Label();
             this.lblProgress = new System.Windows.Forms.Label();
             this.lblSrchRes = new System.Windows.Forms.Label();
             this.panBottom = new System.Windows.Forms.Panel();
@@ -630,7 +629,6 @@
             // 
             this.panLabel.Controls.Add(this.lblStats);
             this.panLabel.Controls.Add(this.pbar);
-            this.panLabel.Controls.Add(this.lblCrippled);
             this.panLabel.Controls.Add(this.lblProgress);
             this.panLabel.Controls.Add(this.btnTogglePreview);
             this.panLabel.Controls.Add(this.lblSrchRes);
@@ -661,19 +659,6 @@
             this.pbar.Size = new System.Drawing.Size(1278, 23);
             this.pbar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.pbar.TabIndex = 5;
-            // 
-            // lblCrippled
-            // 
-            this.lblCrippled.AutoSize = true;
-            this.lblCrippled.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCrippled.ForeColor = System.Drawing.Color.Red;
-            this.lblCrippled.Location = new System.Drawing.Point(100, 4);
-            this.lblCrippled.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblCrippled.Name = "lblCrippled";
-            this.lblCrippled.Size = new System.Drawing.Size(234, 13);
-            this.lblCrippled.TabIndex = 4;
-            this.lblCrippled.Text = "Enter a registration key for much faster searches";
-            this.lblCrippled.Visible = false;
             // 
             // lblProgress
             // 
@@ -916,7 +901,6 @@
         private System.Windows.Forms.Label lblFileType;
         private System.Windows.Forms.TextBox txbFileType;
         private System.Windows.Forms.CheckBox cbOnlyFiles;
-        private System.Windows.Forms.Label lblCrippled;
         private System.Windows.Forms.CheckBox cbIncludeOffice;
         private System.Windows.Forms.ProgressBar pbar;
         private System.Windows.Forms.Label lblStats;

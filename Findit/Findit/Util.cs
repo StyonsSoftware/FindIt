@@ -102,20 +102,26 @@ namespace Findit
 
         public static void OpenFile(string fname, string customexe)
         {
+            //disposing a Process does not stop it - it just hands back the handle we are
+            //holding on this side.  these used to be dropped unclosed on every open.
             if(System.IO.File.Exists(fname))
             {
                 if (System.IO.File.Exists(customexe))
                 {
                     //start using the custom exe they asked for
-                    Process ntpdplpl = new Process();
-                    ntpdplpl.StartInfo.FileName = customexe;
-                    ntpdplpl.StartInfo.Arguments = "\"" + fname + "\"";
-                    ntpdplpl.Start();
+                    using (Process editor = new Process())
+                    {
+                        editor.StartInfo.FileName = customexe;
+                        editor.StartInfo.Arguments = "\"" + fname + "\"";
+                        editor.Start();
+                    }
                 }
                 else
                 {
                     //let the system decide what is the best editor
-                    Process.Start(fname);
+                    using (Process.Start(fname))
+                    {
+                    }
                 }
             }
         }
@@ -129,8 +135,9 @@ namespace Findit
         {
             if (System.IO.File.Exists(fullfilename))
             {
-                string foldername = System.IO.Directory.GetParent(fullfilename).ToString();
-                System.Diagnostics.Process.Start("explorer.exe", @"/select, " + fullfilename);
+                using (Process.Start("explorer.exe", @"/select, " + fullfilename))
+                {
+                }
             }
         }
 
@@ -155,8 +162,14 @@ namespace Findit
             }
             else
             {
-                Graphics g = Graphics.FromHwnd(frmMain.ActiveForm.Handle);
-                return (int)g.MeasureString(text, fnt).Width;
+                //this is called for every line of the search terms box on every keystroke.
+                //the Graphics used to be left for the finalizer, which is a device context
+                //leaked per call - the fastest way there is to run a process out of GDI
+                //handles.
+                using (Graphics g = Graphics.FromHwnd(frmMain.ActiveForm.Handle))
+                {
+                    return (int)g.MeasureString(text, fnt).Width;
+                }
             }
         }
 

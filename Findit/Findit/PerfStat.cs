@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Findit
 {
     //structure to hold performance data.  each thread must keep their own records for thread-safety reasons.
-    //(example: two threads increment the "files searched" counter at the same time, resulting in one of 
+    //(example: two threads increment the "files searched" counter at the same time, resulting in one of
     //their increments being lost).
     public struct PerfStat
     {

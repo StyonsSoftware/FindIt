@@ -52,9 +52,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.tbarThreadCount)).BeginInit();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
-            // 
+            //
             // panel1
-            // 
+            //
             this.panel1.Controls.Add(this.cbBlinkFinish);
             this.panel1.Controls.Add(this.cbBlinkEvery);
             this.panel1.Controls.Add(this.cbBlinkFirst);
@@ -76,9 +76,9 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(696, 390);
             this.panel1.TabIndex = 0;
-            // 
+            //
             // cbBlinkFinish
-            // 
+            //
             this.cbBlinkFinish.AutoSize = true;
             this.cbBlinkFinish.Location = new System.Drawing.Point(13, 281);
             this.cbBlinkFinish.Name = "cbBlinkFinish";
@@ -86,9 +86,9 @@
             this.cbBlinkFinish.TabIndex = 24;
             this.cbBlinkFinish.Text = "When the search finishes";
             this.cbBlinkFinish.UseVisualStyleBackColor = true;
-            // 
+            //
             // cbBlinkEvery
-            // 
+            //
             this.cbBlinkEvery.AutoSize = true;
             this.cbBlinkEvery.Location = new System.Drawing.Point(13, 253);
             this.cbBlinkEvery.Name = "cbBlinkEvery";
@@ -97,9 +97,9 @@
             this.cbBlinkEvery.Text = "Every time a result is found";
             this.cbBlinkEvery.UseVisualStyleBackColor = true;
             this.cbBlinkEvery.CheckedChanged += new System.EventHandler(this.cbBlinkEvery_CheckedChanged);
-            // 
+            //
             // cbBlinkFirst
-            // 
+            //
             this.cbBlinkFirst.AutoSize = true;
             this.cbBlinkFirst.Location = new System.Drawing.Point(13, 225);
             this.cbBlinkFirst.Name = "cbBlinkFirst";
@@ -107,9 +107,9 @@
             this.cbBlinkFirst.TabIndex = 22;
             this.cbBlinkFirst.Text = "When the first result is found";
             this.cbBlinkFirst.UseVisualStyleBackColor = true;
-            // 
+            //
             // lblBlinkTitle
-            // 
+            //
             this.lblBlinkTitle.AutoSize = true;
             this.lblBlinkTitle.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblBlinkTitle.Location = new System.Drawing.Point(10, 204);
@@ -117,18 +117,18 @@
             this.lblBlinkTitle.Size = new System.Drawing.Size(168, 18);
             this.lblBlinkTitle.TabIndex = 21;
             this.lblBlinkTitle.Text = "Blink in the taskbar when:";
-            // 
+            //
             // lblRunSearchAfterLoad
-            // 
+            //
             this.lblRunSearchAfterLoad.AutoSize = true;
             this.lblRunSearchAfterLoad.Location = new System.Drawing.Point(13, 79);
             this.lblRunSearchAfterLoad.Name = "lblRunSearchAfterLoad";
             this.lblRunSearchAfterLoad.Size = new System.Drawing.Size(245, 18);
             this.lblRunSearchAfterLoad.TabIndex = 20;
             this.lblRunSearchAfterLoad.Text = "Run saved searches after loading them";
-            // 
+            //
             // lblRecommendThreadCount
-            // 
+            //
             this.lblRecommendThreadCount.AutoSize = true;
             this.lblRecommendThreadCount.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblRecommendThreadCount.ForeColor = System.Drawing.Color.Black;
@@ -137,9 +137,9 @@
             this.lblRecommendThreadCount.Size = new System.Drawing.Size(91, 18);
             this.lblRecommendThreadCount.TabIndex = 19;
             this.lblRecommendThreadCount.Text = "set from code";
-            // 
+            //
             // lblSelectedThreadCount
-            // 
+            //
             this.lblSelectedThreadCount.AutoSize = true;
             this.lblSelectedThreadCount.Font = new System.Drawing.Font("Calibri", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblSelectedThreadCount.Location = new System.Drawing.Point(377, 148);
@@ -147,18 +147,18 @@
             this.lblSelectedThreadCount.Size = new System.Drawing.Size(20, 23);
             this.lblSelectedThreadCount.TabIndex = 18;
             this.lblSelectedThreadCount.Text = "1";
-            // 
+            //
             // lblSearchThreadCount
-            // 
+            //
             this.lblSearchThreadCount.AutoSize = true;
             this.lblSearchThreadCount.Location = new System.Drawing.Point(13, 127);
             this.lblSearchThreadCount.Name = "lblSearchThreadCount";
             this.lblSearchThreadCount.Size = new System.Drawing.Size(99, 18);
             this.lblSearchThreadCount.TabIndex = 17;
             this.lblSearchThreadCount.Text = "Search threads";
-            // 
+            //
             // tbarThreadCount
-            // 
+            //
             this.tbarThreadCount.Location = new System.Drawing.Point(17, 148);
             this.tbarThreadCount.Maximum = 50;
             this.tbarThreadCount.Minimum = 1;
@@ -167,9 +167,9 @@
             this.tbarThreadCount.TabIndex = 16;
             this.tbarThreadCount.Value = 1;
             this.tbarThreadCount.ValueChanged += new System.EventHandler(this.tbarThreadCount_ValueChanged);
-            // 
+            //
             // cbRunSearchAfterLoad
-            // 
+            //
             this.cbRunSearchAfterLoad.AutoSize = true;
             this.cbRunSearchAfterLoad.Location = new System.Drawing.Point(264, 82);
             this.cbRunSearchAfterLoad.Name = "cbRunSearchAfterLoad";
@@ -177,18 +177,18 @@
             this.cbRunSearchAfterLoad.Size = new System.Drawing.Size(15, 14);
             this.cbRunSearchAfterLoad.TabIndex = 15;
             this.cbRunSearchAfterLoad.UseVisualStyleBackColor = true;
-            // 
+            //
             // txbColor
-            // 
+            //
             this.txbColor.Location = new System.Drawing.Point(650, 3);
             this.txbColor.Name = "txbColor";
             this.txbColor.Size = new System.Drawing.Size(43, 26);
             this.txbColor.TabIndex = 14;
             this.txbColor.Text = "color";
             this.txbColor.Visible = false;
-            // 
+            //
             // lblInvalidNotice
-            // 
+            //
             this.lblInvalidNotice.AutoSize = true;
             this.lblInvalidNotice.Font = new System.Drawing.Font("Calibri", 11.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblInvalidNotice.ForeColor = System.Drawing.Color.Red;
@@ -198,9 +198,9 @@
             this.lblInvalidNotice.TabIndex = 13;
             this.lblInvalidNotice.Text = "This file does not exist";
             this.lblInvalidNotice.Visible = false;
-            // 
+            //
             // txbCustomEditorExe
-            // 
+            //
             this.txbCustomEditorExe.Location = new System.Drawing.Point(16, 31);
             this.txbCustomEditorExe.Margin = new System.Windows.Forms.Padding(4);
             this.txbCustomEditorExe.Name = "txbCustomEditorExe";
@@ -208,9 +208,9 @@
             this.txbCustomEditorExe.TabIndex = 2;
             this.txbCustomEditorExe.Text = "C:\\windows\\notepad.exe";
             this.txbCustomEditorExe.TextChanged += new System.EventHandler(this.txbCustomEditorExe_TextChanged);
-            // 
+            //
             // label1
-            // 
+            //
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(13, 9);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
@@ -218,9 +218,9 @@
             this.label1.Size = new System.Drawing.Size(96, 18);
             this.label1.TabIndex = 1;
             this.label1.Text = "Custom editor";
-            // 
+            //
             // btnBrowse
-            // 
+            //
             this.btnBrowse.Location = new System.Drawing.Point(378, 31);
             this.btnBrowse.Margin = new System.Windows.Forms.Padding(4);
             this.btnBrowse.Name = "btnBrowse";
@@ -229,9 +229,9 @@
             this.btnBrowse.Text = "...";
             this.btnBrowse.UseVisualStyleBackColor = true;
             this.btnBrowse.Click += new System.EventHandler(this.btnBrowse_Click);
-            // 
+            //
             // panel2
-            // 
+            //
             this.panel2.Controls.Add(this.btnSave);
             this.panel2.Controls.Add(this.btnCancel);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Bottom;
@@ -240,9 +240,9 @@
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(696, 68);
             this.panel2.TabIndex = 1;
-            // 
+            //
             // btnSave
-            // 
+            //
             this.btnSave.Dock = System.Windows.Forms.DockStyle.Right;
             this.btnSave.Image = ((System.Drawing.Image)(resources.GetObject("btnSave.Image")));
             this.btnSave.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -255,9 +255,9 @@
             this.btnSave.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
-            // 
+            //
             // btnCancel
-            // 
+            //
             this.btnCancel.Dock = System.Windows.Forms.DockStyle.Left;
             this.btnCancel.Image = ((System.Drawing.Image)(resources.GetObject("btnCancel.Image")));
             this.btnCancel.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -270,9 +270,9 @@
             this.btnCancel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
-            // 
+            //
             // Config
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(696, 390);

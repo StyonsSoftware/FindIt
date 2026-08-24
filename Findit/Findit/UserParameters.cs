@@ -21,7 +21,6 @@ namespace Findit
         //it is a command-line app feature.
         public Boolean Remind;
         public string[] AbsentStrings;
-        public Boolean Crippled;
         public Boolean OnlyFileNames;
         public Boolean IncludeOffice;
 

@@ -20,7 +20,14 @@ namespace Findit
     private QueueBuilder qb;
     Grepper[] searchers = { };
     System.Diagnostics.Stopwatch Swatch = new System.Diagnostics.Stopwatch();
+
+    //one entry per row of lbResults, at the same index.  see AddResultRow.
     public List<FileMatchLines> listBoxFiles = new List<FileMatchLines>();
+
+    //GUI preferences, read once instead of on every use.  see RefreshCachedGuiPreferences.
+    private BlinkOpt _blinkOptions;
+    private string _customEditorExe = "";
+    private bool _runSavedSearchesAfterLoad;
 
     public frmMain()
     {
@@ -32,6 +39,7 @@ namespace Findit
       splitCont.Panel2Collapsed = true;
       LoadSearchParameters();
       LoadGuiPreferences();
+      RefreshCachedGuiPreferences();
       HighlightInvalidFolder();
       rtbSearchTerms.Select();
       openFileInCustomEditorToolStripMenuItem.ToolTipText = @"Opens the selected file in an editor of your choice" +
@@ -52,41 +60,6 @@ namespace Findit
       ManuallyArrangeOutputArea();
       SetSearchTermsWidth();
     }
-
-    //private void ApplyLicenseRules()
-    //{
-    //  regInfo = new Registration();
-
-    //  if (regInfo.PaidFor())
-    //  {
-    //    SetPerformanceCrippling(false);
-    //  }
-    //  else
-    //  {
-    //    if (regInfo.WithinTrialPeriod())
-    //    {
-    //      BegForMoney();
-    //      SetPerformanceCrippling(false);
-    //    }
-    //    else
-    //    {
-    //      BegForMoney();
-    //      SetPerformanceCrippling(!regInfo.PaidFor());
-    //    }
-    //  }
-    //}
-
-    //private void SetPerformanceCrippling(Boolean IsCrippled)
-    //{
-    //  g_Crippled = IsCrippled;
-    //}
-
-    //private void BegForMoney()
-    //{
-    //  PurchaseOptions regForm = new PurchaseOptions();
-    //  regForm.StartPosition = FormStartPosition.CenterParent;
-    //  regForm.ShowDialog();
-    //}
 
     private void ManuallyArrangeOutputArea()
     {
@@ -162,23 +135,32 @@ namespace Findit
 
     private void SavePreferences()
     {
-      SearchParameters sp = SearchParametersFromUI();
-      sp.SaveToRegistry();
+      //these hold an open registry key, so they get disposed rather than left to a finalizer
+      using (SearchParameters sp = SearchParametersFromUI())
+      {
+        sp.SaveToRegistry();
+      }
 
-      GUIPreferences gp = GuiPreferencesFromUI();
-      gp.SaveToRegistry();
+      using (GUIPreferences gp = GuiPreferencesFromUI())
+      {
+        gp.SaveToRegistry();
+      }
     }
 
     private void LoadSearchParameters()
     {
-      SearchParameters sp = new SearchParameters();
-      UIFromSearchParameters(sp);
+      using (SearchParameters sp = new SearchParameters())
+      {
+        UIFromSearchParameters(sp);
+      }
     }
 
     private void LoadGuiPreferences()
     {
-      GUIPreferences gp = new GUIPreferences();
-      UIFromGuiPreferences(gp);
+      using (GUIPreferences gp = new GUIPreferences())
+      {
+        UIFromGuiPreferences(gp);
+      }
     }
 
     private void UIFromSearchParameters(SearchParameters sp)
@@ -294,8 +276,11 @@ namespace Findit
       PrepareForNewSearch();
       up = GetUserParams();
 
-      GUIPreferences gp = new GUIPreferences();
-      int searchThreadCount = gp.SearchThreadCount;
+      int searchThreadCount;
+      using (GUIPreferences gp = new GUIPreferences())
+      {
+        searchThreadCount = gp.SearchThreadCount;
+      }
       Array.Resize(ref searchers, searchThreadCount);
       Globals.statBoard = new StatusBoard(searchThreadCount);
 
@@ -323,14 +308,23 @@ namespace Findit
         textFindingThread.IsBackground = true;
         textFindingThread.Start();
       }
-      //at this point, the threads are running.  just watch them and print what's going on
-      timerRefreshGUI.Enabled = true;
-
+      //at this point, the threads are running.  just watch them and print what's going on.
+      //size the result bookmarks before anything can repaint, because RefreshGUI indexes
+      //straight into them.
       Array.Resize(ref lastReportedIndexes, searchers.Length);
       for (int i = 0; i < lastReportedIndexes.Length; ++i)
       {
         lastReportedIndexes[i] = 0;
       }
+
+      timerRefreshGUI.Enabled = true;
+
+      //paint the "search is running" state now instead of waiting up to a full timer
+      //interval for it.  RefreshGUI is the only thing that enables the Cancel button, and
+      //during a search it is only ever called by timerRefreshGUI - which ticks every 250ms.
+      //A search that finishes inside that window used to come and go without a single tick,
+      //so Cancel stayed greyed out for the whole thing.
+      RefreshGUI();
 
       while (SearchIsActive())
       {
@@ -345,8 +339,7 @@ namespace Findit
       //one final printout in case we missed anything
       RefreshGUI();
       timerRefreshGUI.Enabled = false;
-      BlinkOpt bo = BlinkOptions();
-      if (bo.finish && !AlreadyQuit)
+      if (_blinkOptions.finish && !AlreadyQuit)
       {
         FlashWindow.Flash(this);
       }
@@ -431,14 +424,7 @@ namespace Findit
         {
           for (int j = lastReportedIndexes[i]; j < resultCountFromThisThread; ++j)
           {
-            if (up.IncludeLineNumbers)
-            {
-              writeoutput(searchers[i].SearchResults[j].FileName + " @ " + searchers[i].SearchResults[j].LineNumber.ToString(), searchers[i].SearchResults[j].LineNumber);
-            }
-            else
-            {
-              writeoutput(searchers[i].SearchResults[j].FileName, searchers[i].SearchResults[j].LineNumber);
-            }
+            WriteMatch(searchers[i].SearchResults[j].FileName, searchers[i].SearchResults[j].LineNumber);
           }
         }
         lastReportedIndexes[i] = resultCountFromThisThread;
@@ -516,29 +502,12 @@ namespace Findit
         {
           lblProgress.Text = @"Error: " + Globals.statBoard.UserFacingError;
         }
-        lblCrippled.Visible = false;
         btnClear.Enabled = true;
         RefreshProgressBar(true);
       }
       SetEnabledStatesDuringSearch(!btnSearch.Enabled);
       btnCancel.Enabled = !btnSearch.Enabled;
-      //RefreshPSLabels();           
     }
-
-    //private void RefreshPerSecondLabels()
-    //{
-    //    ElapsedSeconds = (((float)(Swatch.ElapsedMilliseconds)) / 1000);
-    //    PerfStat ps = AggregatePerformanceStats();
-    //    Int64 fps = 0;
-    //    Int64 lps = 0;
-    //    if (0 < ElapsedSeconds)
-    //    {
-    //        fps = (Int64)Math.Round(ps.TotalFilesProcessed / ElapsedSeconds);
-    //        lps = (Int64)Math.Round(ps.LinesSearched / ElapsedSeconds);
-    //    }
-    //    lblFPSValue.Text = fps.ToString("###,###,##0");
-    //    lblLPSValue.Text = lps.ToString("###,###,##0");
-    //}
 
     private void RefreshProgressBar(bool final)
     {
@@ -611,18 +580,39 @@ namespace Findit
       }
     }
 
-    private void writeoutput(string WhatToWrite, Int64 LineNumber = 0)
+    /*
+    Every row in lbResults has a matching entry at the same index in listBoxFiles, and that
+    entry is the only place the real file name and line number live.
+
+    The row *text* is for reading, and it is not a path: it may have a line number stuck on
+    the end of it, or be a line of performance stats that is not a file at all.  Treating
+    the row text as a file name is exactly what used to happen, which is why preview,
+    open-in-editor and open-enclosing-folder all stopped working the moment you ticked
+    "include line numbers".  Go through SelectedResultsFile instead - never lbResults.Items.
+    //*/
+    private void AddResultRow(string displayText, string fileName, Int64 lineNumber)
     {
-      lbResults.Items.Add(WhatToWrite);
+      lbResults.Items.Add(displayText);
       FileMatchLines fml = new FileMatchLines();
-      fml.FileName = WhatToWrite;
-      fml.LineNumber = LineNumber;
+      fml.FileName = fileName;
+      fml.LineNumber = lineNumber;
       listBoxFiles.Add(fml);
-      BlinkOpt blinks = BlinkOptions();
-      if (blinks.every || (blinks.first && 1 == lbResults.Items.Count))
+      if (_blinkOptions.every || (_blinkOptions.first && 1 == lbResults.Items.Count))
       {
         FlashWindow.Flash(this);
       }
+    }
+
+    private void WriteMatch(string fileName, Int64 lineNumber)
+    {
+      string displayText = up.IncludeLineNumbers ? (fileName + " @ " + lineNumber.ToString()) : fileName;
+      AddResultRow(displayText, fileName, lineNumber);
+    }
+
+    private void writeoutput(string WhatToWrite)
+    {
+      //a line of commentary - performance stats and the like.  not a file.
+      AddResultRow(WhatToWrite, string.Empty, 0);
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
@@ -722,51 +712,55 @@ namespace Findit
       Int64 EndPoint = linenumber + 10;
       Int64 maxCutoff = 1000;
       Int64 iters = 0;
-      System.IO.StreamReader reader = new System.IO.StreamReader(filename);
-      do
+      //'using': the Close at the bottom never ran if anything in here threw, and the caller
+      //swallows every exception, so the file just stayed open with nobody the wiser.
+      using (System.IO.StreamReader reader = new System.IO.StreamReader(filename))
       {
-        var currentLine = reader.ReadLine();
-        if ((currentLine == null) || (-1 < currentLine.IndexOf("\0\0\0\0\0\0\0", StringComparison.Ordinal)))
+        do
         {
-          rtb.Clear();
-          string officeDocContents = "";// OfficeDocumentContents(filename);
-          if (0 < officeDocContents.Length)
+          var currentLine = reader.ReadLine();
+          if ((currentLine == null) || (-1 < currentLine.IndexOf("\0\0\0\0\0\0\0", StringComparison.Ordinal)))
           {
-            PreviewTextFromOfficeDocument(ref rtb, officeDocContents, StartPoint, EndPoint);
+            rtb.Clear();
+            string officeDocContents = "";// OfficeDocumentContents(filename);
+            if (0 < officeDocContents.Length)
+            {
+              PreviewTextFromOfficeDocument(ref rtb, officeDocContents, StartPoint, EndPoint);
+            }
+            else
+            {
+              System.IO.FileInfo finfo = new System.IO.FileInfo(filename);
+              System.Diagnostics.FileVersionInfo myFileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(filename);
+              rtb.AppendText("This is a binary file.  Preview is not available.");
+              rtb.AppendText(Environment.NewLine + "File size (in MB): " + Math.Round(finfo.Length / 1048576.0, 4));
+              rtb.AppendText(Environment.NewLine + "File version     : " + myFileVersionInfo.FileVersion);
+            }
+            break;
           }
-          else
+          if ((LastReadLine > StartPoint) && (LastReadLine < EndPoint))
           {
-            System.IO.FileInfo finfo = new System.IO.FileInfo(filename);
-            System.Diagnostics.FileVersionInfo myFileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(filename);
-            rtb.AppendText("This is a binary file.  Preview is not available.");
-            rtb.AppendText(Environment.NewLine + "File size (in MB): " + Math.Round(finfo.Length / 1048576.0, 4));
-            rtb.AppendText(Environment.NewLine + "File version     : " + myFileVersionInfo.FileVersion);
+            rtb.AppendText(currentLine + Environment.NewLine);
           }
-          break;
-        }
-        if ((LastReadLine > StartPoint) && (LastReadLine < EndPoint))
-        {
-          rtb.AppendText(currentLine + Environment.NewLine);
-        }
-        LastReadLine++;
+          LastReadLine++;
 
-        if (LastReadLine > EndPoint)
-        {
-          break;
-        }
-        if (++iters > (maxCutoff + linenumber))
-        {
-          MessageBox.Show(@"Looped more than " + maxCutoff + @" in 'RefreshExceptPane' with these arguments:"
-              + Environment.NewLine + @"filename = '" + filename + @"'"
-              + Environment.NewLine + @"linenumber = " + linenumber);
-          break;
-        }
-      } while (!reader.EndOfStream);
+          if (LastReadLine > EndPoint)
+          {
+            break;
+          }
+          if (++iters > (maxCutoff + linenumber))
+          {
+            MessageBox.Show(@"Looped more than " + maxCutoff + @" in 'RefreshExceptPane' with these arguments:"
+                + Environment.NewLine + @"filename = '" + filename + @"'"
+                + Environment.NewLine + @"linenumber = " + linenumber);
+            break;
+          }
+        } while (!reader.EndOfStream);
+      }
+
       foreach (string s in highlightwords)
       {
         Util.HighlightWordInRtb(ref rtb, s);
       }
-      reader.Close();
       splitCont.Panel2Collapsed = false;
     }
 
@@ -774,18 +768,13 @@ namespace Findit
     {
       try
       {
-        string selectedfname = lbResults.Items[lbResults.SelectedIndex].ToString();
-        if (System.IO.File.Exists(selectedfname))
+        //the selected row's index *is* the index into listBoxFiles, so there is no need to
+        //hunt through it for a row with a matching name - which also picked the wrong entry
+        //whenever the same file turned up twice.
+        string selectedfname = SelectedResultsFile();
+        if ((0 < selectedfname.Length) && System.IO.File.Exists(selectedfname))
         {
-          Int64 CenterOnThisLine = 0;
-          for (int i = listBoxFiles.Count - 1; i > -1; i--)
-          {
-            if (selectedfname == listBoxFiles[i].FileName)
-            {
-              CenterOnThisLine = listBoxFiles[i].LineNumber;
-            }
-          }
-          RefreshExcerptPane(selectedfname, CenterOnThisLine, ref rtbExcerpt, rtbSearchTerms.Lines);
+          RefreshExcerptPane(selectedfname, SelectedResultsLineNumber(), ref rtbExcerpt, rtbSearchTerms.Lines);
         }
       }
       catch
@@ -881,7 +870,9 @@ namespace Findit
 
       //results area
       rtbExcerpt.Clear();
+      //these two are indexed against each other, so they are always cleared together
       lbResults.Items.Clear();
+      listBoxFiles.Clear();
 
       tabctlSearchOptions.Refresh();
     }
@@ -934,7 +925,9 @@ namespace Findit
     {
       if (System.IO.Directory.Exists(lblProgress.Text))
       {
-        System.Diagnostics.Process.Start("explorer.exe", lblProgress.Text);
+        using (System.Diagnostics.Process.Start("explorer.exe", lblProgress.Text))
+        {
+        }
       }
     }
 
@@ -952,11 +945,11 @@ namespace Findit
 
     private void openFileInDefaultEditorToolStripMenuItem_Click(object sender, EventArgs e)
     {
-      try
+      if (0 < SelectedResultsFile().Length)
       {
-        Util.OpenFile(lbResults.Items[lbResults.SelectedIndex].ToString().Trim(), String.Empty);
+        Util.OpenFile(SelectedResultsFile(), String.Empty);
       }
-      catch
+      else
       {
         MessageBox.Show(@"Select a row first!");
       }
@@ -976,14 +969,12 @@ namespace Findit
 
     private string CustomEditorExeName()
     {
-      GUIPreferences gp = new GUIPreferences();
-      return gp.CustomEditorExe;
+      return _customEditorExe;
     }
 
     private Boolean RunSavedSearchesAfterLoad()
     {
-      GUIPreferences gp = new GUIPreferences();
-      return gp.RunSearchesAfterLoad;
+      return _runSavedSearchesAfterLoad;
     }
 
     private struct BlinkOpt
@@ -993,14 +984,28 @@ namespace Findit
       public bool finish;
     }
 
-    private BlinkOpt BlinkOptions()
+    /*
+    These are read once and kept, rather than re-read on demand.
+
+    Every one of them used to build a GUIPreferences, and building one of those opens a
+    registry key and enumerates every value under it.  The blink settings are consulted for
+    each result row as it is added, so a search that turned up ten thousand files opened and
+    walked the registry ten thousand times - and, before these became disposable, left ten
+    thousand key handles waiting on the finalizer.
+
+    Nothing outside the Options dialog can change them, so this is refreshed on load and
+    again whenever that dialog closes.
+    //*/
+    private void RefreshCachedGuiPreferences()
     {
-      GUIPreferences gp = new GUIPreferences();
-      BlinkOpt result = new BlinkOpt();
-      result.every = gp.BlinkOnEvery;
-      result.finish = gp.BlinkOnFinish;
-      result.first = gp.BlinkOnFirst;
-      return result;
+      using (GUIPreferences gp = new GUIPreferences())
+      {
+        _blinkOptions.every = gp.BlinkOnEvery;
+        _blinkOptions.finish = gp.BlinkOnFinish;
+        _blinkOptions.first = gp.BlinkOnFirst;
+        _customEditorExe = gp.CustomEditorExe;
+        _runSavedSearchesAfterLoad = gp.RunSearchesAfterLoad;
+      }
     }
 
     private void openEnclosingFolderToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1015,16 +1020,27 @@ namespace Findit
       }
     }
 
+    //the file behind the selected row.  empty if nothing is selected, or if the selected
+    //row is not a file at all (a performance-stats line, say).  this used to return the row
+    //*text*, which is not a path once "include line numbers" puts " @ 42" on the end of it.
     private string SelectedResultsFile()
     {
-      if (lbResults.SelectedItem != null)
-      {
-        return lbResults.SelectedItem.ToString();
-      }
-      else
+      int idx = lbResults.SelectedIndex;
+      if ((idx < 0) || (idx >= listBoxFiles.Count))
       {
         return "";
       }
+      return listBoxFiles[idx].FileName;
+    }
+
+    private Int64 SelectedResultsLineNumber()
+    {
+      int idx = lbResults.SelectedIndex;
+      if ((idx < 0) || (idx >= listBoxFiles.Count))
+      {
+        return 0;
+      }
+      return listBoxFiles[idx].LineNumber;
     }
 
     private void oToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1034,8 +1050,12 @@ namespace Findit
 
     private void ShowOptions()
     {
-      Config cf = new Config();
-      cf.ShowDialog();
+      using (Config cf = new Config())
+      {
+        cf.ShowDialog();
+      }
+      //the dialog is the only thing that can change these, so re-read them now
+      RefreshCachedGuiPreferences();
     }
 
     private void btnClear_Click(object sender, EventArgs e)
@@ -1060,19 +1080,24 @@ namespace Findit
     {
       //return the font that is correct for the given tab index
       //the "correct" font is based on the current font of that tab.
-      Font resultFont = new Font(currFont, currFont.Style);
+      //
+      //work the style out first and build exactly one Font from it.  this used to build a
+      //Font and then drop it, unused and undisposed, the moment the switch replaced it -
+      //a leaked font handle on every repaint of the tab strip.
+      FontStyle captionStyle = currFont.Style;
       switch (TabIdx)
       {
         case 0:
-          resultFont = new Font(currFont, FontStyle.Bold); break;
+          captionStyle = FontStyle.Bold;
+          break;
         case 1:
           if (CustomAdvancedOptions())
           {
-            resultFont = new Font(currFont, FontStyle.Italic | FontStyle.Bold);
+            captionStyle = FontStyle.Italic | FontStyle.Bold;
           }
           break;
       }
-      return resultFont;
+      return new Font(currFont, captionStyle);
     }
 
     private void tabctlSearchOptions_DrawItem(object sender, DrawItemEventArgs e)
@@ -1080,53 +1105,58 @@ namespace Findit
       //this event is the plumbing for the "Advanced Options" tab to be drawn in
       //italics whenever non-default options are set on that tab.
       //see the "GetTabCaptionFont" function for the important decision-making
-      Font TabFont;
-      Brush BackBrush = GetBackgroundBrush();
-      Brush ForeBrush = GetForegroundBrush();
-      TabFont = GetTabCaptionFont(e.Index, e.Font);
+      //
+      //'using' rather than a run of Dispose calls at the bottom: those disposed BackBrush
+      //twice and never ran at all if the drawing threw.
       string TabName = tabctlSearchOptions.TabPages[e.Index].Text;
-      StringFormat sf = new StringFormat();
-      sf.Alignment = StringAlignment.Center;
-      e.Graphics.FillRectangle(BackBrush, e.Bounds);
       Rectangle r = e.Bounds;
       r = new Rectangle(r.X - 2, r.Y + 3, r.Width + 5, r.Height - 3);
-      e.Graphics.DrawString(TabName, TabFont, ForeBrush, r, sf);
 
-      //Cleanup
-      sf.Dispose();
-      TabFont.Dispose();
-      BackBrush.Dispose();
-      BackBrush.Dispose();
-      ForeBrush.Dispose();
+      using (Brush BackBrush = GetBackgroundBrush())
+      using (Brush ForeBrush = GetForegroundBrush())
+      using (Font TabFont = GetTabCaptionFont(e.Index, e.Font))
+      using (StringFormat sf = new StringFormat())
+      {
+        sf.Alignment = StringAlignment.Center;
+        e.Graphics.FillRectangle(BackBrush, e.Bounds);
+        e.Graphics.DrawString(TabName, TabFont, ForeBrush, r, sf);
+      }
     }
 
     private void SaveCurrentSearch()
     {
       //save by seriallizing the preferences object
-      SaveFileDialog svdg = new SaveFileDialog();
-      svdg.Filter = @"FindIt files (*.fit)|*.fit|All files (*.*)|*.*";
-      svdg.FilterIndex = 1;
-      if (svdg.ShowDialog() == DialogResult.OK)
+      using (SaveFileDialog svdg = new SaveFileDialog())
       {
-        Serializer s = new Serializer();
-        s.SerializeObject(svdg.FileName, SearchParametersFromUI());
-        AddSavedSearchToRecentSearches(svdg.FileName, c_MaxRecentSearches);
+        svdg.Filter = @"FindIt files (*.fit)|*.fit|All files (*.*)|*.*";
+        svdg.FilterIndex = 1;
+        if (svdg.ShowDialog() == DialogResult.OK)
+        {
+          using (SearchParameters sp = SearchParametersFromUI())
+          {
+            Serializer s = new Serializer();
+            s.SerializeObject(svdg.FileName, sp);
+          }
+          AddSavedSearchToRecentSearches(svdg.FileName, c_MaxRecentSearches);
+        }
       }
     }
 
     private void PromptForSavedSearch()
     {
-      OpenFileDialog opdg = new OpenFileDialog();
-      opdg.Title = @"Choose a saved search";
-      opdg.InitialDirectory = @"c:\";
-      opdg.Filter = @"FindIt files (*.fit)|*.fit|All files (*.*)|*.*";
-      opdg.FilterIndex = 1;
-      opdg.RestoreDirectory = true;
-
-      if (opdg.ShowDialog() == DialogResult.OK)
+      using (OpenFileDialog opdg = new OpenFileDialog())
       {
-        LoadSavedSearch(opdg.FileName);
-        AddSavedSearchToRecentSearches(opdg.FileName, c_MaxRecentSearches);
+        opdg.Title = @"Choose a saved search";
+        opdg.InitialDirectory = @"c:\";
+        opdg.Filter = @"FindIt files (*.fit)|*.fit|All files (*.*)|*.*";
+        opdg.FilterIndex = 1;
+        opdg.RestoreDirectory = true;
+
+        if (opdg.ShowDialog() == DialogResult.OK)
+        {
+          LoadSavedSearch(opdg.FileName);
+          AddSavedSearchToRecentSearches(opdg.FileName, c_MaxRecentSearches);
+        }
       }
     }
 
@@ -1151,7 +1181,10 @@ namespace Findit
         }
 
         string[] recentlocations = Util.ComboToStrArry(ref cboSearchFolders, c_RecentSearchCutoff);
-        UIFromSearchParameters(loadedparameters);
+        using (loadedparameters)
+        {
+          UIFromSearchParameters(loadedparameters);
+        }
         string loadedlocation = cboSearchFolders.Text;
         foreach (string recentloc in recentlocations)
         {

@@ -18,6 +18,17 @@ namespace Findit
             InitializeComponent();
         }
 
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            base.OnFormClosed(e);
+            //gp holds an open registry key for as long as this dialog is up
+            if (gp != null)
+            {
+                gp.Dispose();
+                gp = null;
+            }
+        }
+
         private void btnSave_Click(object sender, EventArgs e)
         {
             SaveConfigOptions();
@@ -62,7 +73,7 @@ namespace Findit
         }
 
         private void FolderClick(ref TextBox DisplayBox, string filter)
-        {           
+        {
             //show a folder browser dialog & tie it to whatever textbox they gave us
             OpenFileDialog dlg = new OpenFileDialog();
             dlg.Filter = filter;

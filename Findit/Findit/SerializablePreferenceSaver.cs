@@ -13,25 +13,41 @@ using System.Runtime.Serialization;
 namespace Findit
 {
     [Serializable()]
-    public class SerializablePreferenceSaver : ISerializable
+    public class SerializablePreferenceSaver : ISerializable, IDisposable
     {
         public RegistryKey reg;
         public const string c_RegKeyName = @"Software\FindIt";
 
         public SerializablePreferenceSaver()
         {
-            reg = Registry.CurrentUser;
-            reg.CreateSubKey(c_RegKeyName);
-            reg = Registry.CurrentUser.OpenSubKey(c_RegKeyName, true);
+            //CreateSubKey opens the key for writing and creates it first if it is not there
+            //yet, so it does the whole job of the CreateSubKey-then-OpenSubKey pair that
+            //used to be here.  That pair dropped the key CreateSubKey handed back without
+            //ever closing it - a leaked handle every time one of these was constructed.
+            reg = Registry.CurrentUser.CreateSubKey(c_RegKeyName);
             LoadFromRegistry();
         }
 
-        ~SerializablePreferenceSaver()
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
             if (reg != null)
             {
                 reg.Close();
+                reg = null;
             }
+        }
+
+        //a backstop only.  callers are expected to use 'using': waiting on the finalizer to
+        //hand the key back is how thousands of them piled up during a long search.
+        ~SerializablePreferenceSaver()
+        {
+            Dispose(false);
         }
 
         public virtual void SaveToRegistry()

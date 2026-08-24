@@ -4,7 +4,7 @@ This is distinct from the search parameters themselves.
 
 For example, the list of "recent searches" is an artifact of the application, not any
 particular search.
- 
+
 It is mostly a collection of public properties, to hold folder names and boolean values.
 
 It also includes functionality to save the preferences *to* the registry, and
@@ -102,18 +102,8 @@ namespace Findit
 
         public GUIPreferences()
         {
-            reg = Registry.CurrentUser;
-            reg.CreateSubKey(c_RegKeyName);
-            reg = Registry.CurrentUser.OpenSubKey(c_RegKeyName, true);
-            LoadFromRegistry();
-        }
-
-        ~GUIPreferences()
-        {
-            if (reg != null)
-            {
-                reg.Close();
-            }
+            //the base constructor opens the registry key and calls LoadFromRegistry - see
+            //the note on SearchParameters' constructor for what this used to do instead.
         }
 
         public override void SaveToRegistry()
@@ -139,15 +129,15 @@ namespace Findit
         }
 
         public static Boolean DefaultBlinkOnFirst()
-        {                            
-            return false;            
-        }                            
-                                     
+        {
+            return false;
+        }
+
         public static Boolean DefaultBlinkOnEvery()
-        {                            
-            return false;            
-        }                            
-                                     
+        {
+            return false;
+        }
+
         public static Boolean DefaultBlinkOnFinish()
         {
             return false;

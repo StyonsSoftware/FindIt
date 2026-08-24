@@ -2,16 +2,16 @@
  * The Grepper class is fundamentally about searching for a set of strings within text files.
  * All options are specified using a "UserParameters" object.
  * You execute a search using your parameters using the public 'Search' method.
- * 
+ *
  * A noteworthy option is the ability to specify strings that may *not* exist in the files
  * discovered by the search.
- * 
+ *
  * Search results get dumped into an array of type 'SearchResult', which is
  * just a big list of files that contain your string + the line # they occur on.
- * 
+ *
  * Returning them in this way makes it a lot easier to write threaded applications who
  * can start a search and just monitor the Pile O'Results periodically.
- * 
+ *
  * There is also some non-core functionality to help with debugging and general curiosity.
  * -A 'PerfStat' structure that collects performance data about the speed of the search
  * -A 'Notifications' array that records lots of (usually) useless notifications
@@ -19,7 +19,7 @@
  * -An 'Exceptions' array that holds exceptions, mostly for debugging.
  *  Exceptions are usually just 'permission denied' errors if the user tried to search through folders
  *  where they don't have read access.
- *  
+ *
    Example usage:
             GrepTool.Grepper.UserParameters uparms = new GrepTool.Grepper.UserParameters();
             uparms.SearchPath = "C:\\some_folder";
@@ -32,7 +32,6 @@
             uparms.SearchExtension = "*.xml";
             uparms.ShowPerfStats = true;
             uparms.AbsentStrings = {"File cannot contain this","Or this"};
-            uparms.Crippled = false;
             uparms.OnlyFileNames = false;
 
             gp = new GrepTool.Grepper(uparms);
