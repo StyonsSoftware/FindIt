@@ -1127,9 +1127,22 @@ namespace Findit
       //the contents of the loaded search
       if (System.IO.File.Exists(savedsearchfilename))
       {
+        //read the file before touching the UI, so a bad file leaves everything as it was
+        SearchParameters loadedparameters;
+        try
+        {
+          Serializer s = new Serializer();
+          loadedparameters = s.DeSerializeObject(savedsearchfilename);
+        }
+        catch (Exception ex)
+        {
+          MessageBox.Show(UnreadableSearchFileMessage(savedsearchfilename, ex), @"Cannot load search",
+              MessageBoxButtons.OK, MessageBoxIcon.Warning);
+          return;
+        }
+
         string[] recentlocations = Util.ComboToStrArry(ref cboSearchFolders, c_RecentSearchCutoff);
-        Serializer s = new Serializer();
-        UIFromSearchParameters(s.DeSerializeObject(savedsearchfilename));
+        UIFromSearchParameters(loadedparameters);
         string loadedlocation = cboSearchFolders.Text;
         foreach (string recentloc in recentlocations)
         {
@@ -1143,6 +1156,21 @@ namespace Findit
           ConductSearch();
         }
       }
+    }
+
+    private static string UnreadableSearchFileMessage(string filename, Exception ex)
+    {
+      if (Serializer.IsLegacySearchFile(filename))
+      {
+        return @"'" + filename + @"' was saved by an older version of FindIt."
+            + Environment.NewLine + Environment.NewLine
+            + @"That file format let a saved search run code hidden inside the file, so it is no longer loaded."
+            + Environment.NewLine
+            + @"Set the search up again and save it to get a file this version can read.";
+      }
+      return @"'" + filename + @"' is not a readable FindIt search file."
+          + Environment.NewLine + Environment.NewLine
+          + ex.Message;
     }
 
     private void saveThisSearchToolStripMenuItem_Click(object sender, EventArgs e)

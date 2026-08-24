@@ -9,7 +9,6 @@ using System.Linq;
 using System.Text;
 using Microsoft.Win32;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Findit
 {

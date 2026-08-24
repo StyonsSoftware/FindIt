@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<SavedSearch xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SearchFolder>C:\Users\josep\source\repos\Corewell</SearchFolder>
+  <FileTypeFilter>*.xml</FileTypeFilter>
+  <FileExcludeFilter />
+  <IncludeLineNosInOutput>false</IncludeLineNosInOutput>
+  <IncludePerfStats>false</IncludePerfStats>
+  <CaseSensitive>false</CaseSensitive>
+  <SearchSubfolders>true</SearchSubfolders>
+  <OnlySearchFileNames>false</OnlySearchFileNames>
+  <IncludeOffice>false</IncludeOffice>
+  <SearchTerms>
+    <string>author="</string>
+  </SearchTerms>
+  <ExcludeTerms>
+    <string>author="Generosity Collaborative"</string>
+  </ExcludeTerms>
+</SavedSearch>
