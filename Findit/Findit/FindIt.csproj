@@ -95,7 +95,6 @@
     <Compile Include="forms\Config.Designer.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
-    <Compile Include="FileFinder.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Grepper.cs" />
     <Compile Include="GUIPreferences.cs" />
