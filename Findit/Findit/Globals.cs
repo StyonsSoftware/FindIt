@@ -10,7 +10,8 @@ namespace Findit
     public static class Globals
     {
         public static StatusBoard statBoard;
-        public static List<FileQueue> processorQueues = new List<FileQueue>();
+        //one queue shared by every search thread - see ProcessorFileQueue.cs
+        public static FileQueue fileQueue = new FileQueue();
         public static int RecommendedSearchThreadCount = Math.Max(Environment.ProcessorCount - 3 , 1);
     }
 }

@@ -9,14 +9,13 @@ namespace Findit
   public partial class frmMain : Form
   {
     UserParameters up;
-    //private Registration regInfo;
-    bool g_Crippled;
     bool AlreadyQuit;
     bool FinishedLoading;
     private float ElapsedSeconds;
     private const int c_RecentSearchCutoff = 10;
     private const int c_MaxRecentSearches = 10;
     private const int c_buffer = 20;
+    private const int c_GuiPollMs = 15;  //how long the GUI naps between progress repaints
     private static int[] lastReportedIndexes = { };
     private QueueBuilder qb;
     Grepper[] searchers = { };
@@ -212,11 +211,19 @@ namespace Findit
     private void PrepareForNewSearch()
     {
       ResetSearchLookups();
-      foreach (FileQueue fq in Globals.processorQueues)
+
+      //tell anything still running from a previous search to stop.
+      if (Globals.statBoard != null)
       {
-        fq.filesToSearch.Clear();
+        Globals.statBoard.Halt = true;
       }
-      Globals.processorQueues.Clear();
+
+      //hand this search a brand new queue rather than emptying the old one.  threads left
+      //over from the previous search hold references to the old queue and the old status
+      //board, so they can finish winding down without touching a thing this search uses.
+      //clearing the shared queue out from under them is what used to crash the next search.
+      Globals.fileQueue = new FileQueue();
+
       runSearchToolStripMenuItem.Visible = false;
       cancelSearchToolStripMenuItem.Visible = !runSearchToolStripMenuItem.Visible;
       lbResults.Items.Clear();
@@ -277,7 +284,6 @@ namespace Findit
 
       result.ShowPerfStats = cbPerfStats.Checked;
       result.AbsentStrings = rtbExcludes.Lines;
-      result.Crippled = g_Crippled;
       result.OnlyFileNames = cbOnlyFiles.Checked;
       result.IncludeOffice = cbIncludeOffice.Checked;
       return result;
@@ -289,19 +295,19 @@ namespace Findit
       up = GetUserParams();
 
       GUIPreferences gp = new GUIPreferences();
-      int searchThreadCount = (g_Crippled ? 1 : gp.SearchThreadCount);  //crippled == only one search thread allowed
+      int searchThreadCount = gp.SearchThreadCount;
       Array.Resize(ref searchers, searchThreadCount);
-      for (int i = 0; i < searchThreadCount; ++i)
-      {
-        Globals.processorQueues.Add(new FileQueue());
-      }
       Globals.statBoard = new StatusBoard(searchThreadCount);
+
+      //hand each worker the queue and status board it is to use for *this* search, instead
+      //of letting it look them up through Globals every time it needs them.  they all share
+      //the one queue now and take from it as they finish whatever they were doing.
       for (int i = 0; i < searchThreadCount; ++i)
       {
-        searchers[i] = new Grepper(up, i);
+        searchers[i] = new Grepper(up, i, Globals.statBoard, Globals.fileQueue);
       }
 
-      qb = new QueueBuilder(up, searchThreadCount);
+      qb = new QueueBuilder(up, Globals.statBoard, Globals.fileQueue);
       Thread queueBuilderThread = new Thread(qb.BuildQueues);
       queueBuilderThread.IsBackground = true;
       Swatch.Reset();
@@ -329,7 +335,11 @@ namespace Findit
       while (SearchIsActive())
       {
         lblProgress.Text = Globals.statBoard.LastSearchedFolder;
-        Thread.Sleep(0);
+        //this used to be Sleep(0), which yields but comes straight back, so watching the
+        //search cost a whole core on top of the ones doing the searching.  a real wait
+        //still repaints far faster than anyone can see, and timerRefreshGUI is what
+        //actually keeps the display current.
+        Thread.Sleep(c_GuiPollMs);
         Application.DoEvents();
       }
       //one final printout in case we missed anything
@@ -488,7 +498,6 @@ namespace Findit
         runSearchToolStripMenuItem.Visible = false;
         cancelSearchToolStripMenuItem.Visible = true;
         lblProgress.Text = Globals.statBoard.LastSearchedFolder;
-        lblCrippled.Visible = g_Crippled;
         btnClear.Enabled = false;
         RefreshProgressBar(false);
       }
@@ -1184,17 +1193,6 @@ namespace Findit
       tabctlSearchOptions.Refresh();
     }
 
-    private void registerToolStripMenuItem_Click(object sender, EventArgs e)
-    {
-      PurchaseOptions regForm = new PurchaseOptions();
-      regForm.StartPosition = FormStartPosition.CenterParent;
-      regForm.ShowDialog();
-      //if (regInfo != null)
-      //{
-      //  SetPerformanceCrippling(!regInfo.PaidFor());
-      //}
-    }
-
     private void AddSavedSearchToRecentSearches(string savedsearch, int maxSearches)
     {
       //add a sub-menu item to the "File->Recent searches menu item" with the recent search file name
@@ -1296,25 +1294,6 @@ namespace Findit
 
       if (tmp != null)
         ((TextBox) sender).Width = Math.Max(Math.Min(c_MaxSize, Util.GetPixelWidthOfFormattedText(tmp.Text, tmp.Font, tmp.Width)), c_MinSize);
-    }
-
-//    private void lblCrippled_Click(object sender, EventArgs e)
-//    {
-//      BegForMoney();
-//      SetPerformanceCrippling(!regInfo.PaidFor());
-//    }
-
-    private void btnGenKey_Click(object sender, EventArgs e)
-    {
-      Registration r = new Registration();
-      string key = r.NewKey();
-      txbKeyToValidate.Text = key;
-    }
-
-    private void btnCheckKey_Click(object sender, EventArgs e)
-    {
-      Registration r = new Registration();
-      MessageBox.Show(r.ValidKey(txbKeyToValidate.Text).ToString());
     }
 
     private void cboSearchFolders_TextChanged(object sender, EventArgs e)
@@ -1438,20 +1417,6 @@ namespace Findit
       }
     }
 
-    private void button1_Click(object sender, EventArgs e)
-    {
-      Registration rs = new Registration();
-      for (int i = 0; i < 100000; ++i)
-      {
-        string testkey = rs.NewKey();
-        if (!rs.ValidKey(testkey))
-        {
-          MessageBox.Show(@"Failed on '" + testkey + @"'");
-        }
-      }
-      MessageBox.Show(@"success");
-    }
-
     private void SetSearchTermsWidth()
     {
       rtbSearchTerms.Width = SizeOfSearchTermsBox(ref rtbSearchTerms, lblSearchTerms.Width, tpgBasic.Width - rtbSearchTerms.Left, c_buffer);
@@ -1462,17 +1427,22 @@ namespace Findit
       SetSearchTermsWidth();
     }
 
-    //private void pbar_Click(object sender, EventArgs e)
-    //{
-    //  return;
-    //  //ShowDebugInfo();
-    //}
+        private void txbKeyToValidate_TextChanged(object sender, EventArgs e)
+        {
 
-    //private void ShowDebugInfo()
-    //{
-    //  Diagnostics dg = new Diagnostics();
-    //  dg.searchers = searchers;
-    //  dg.Show();
-    //}
-  }
+        }
+
+        //private void pbar_Click(object sender, EventArgs e)
+        //{
+        //  return;
+        //  //ShowDebugInfo();
+        //}
+
+        //private void ShowDebugInfo()
+        //{
+        //  Diagnostics dg = new Diagnostics();
+        //  dg.searchers = searchers;
+        //  dg.Show();
+        //}
+    }
 }

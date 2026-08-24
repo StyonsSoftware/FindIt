@@ -52,10 +52,6 @@
             this.lblLPSValue = new System.Windows.Forms.Label();
             this.lblFPS = new System.Windows.Forms.Label();
             this.lblLPS = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
-            this.txbKeyToValidate = new System.Windows.Forms.TextBox();
-            this.btnCheckKey = new System.Windows.Forms.Button();
-            this.btnGenKey = new System.Windows.Forms.Button();
             this.lblFileType = new System.Windows.Forms.Label();
             this.lblSearchTerms = new System.Windows.Forms.Label();
             this.cboSearchFolders = new System.Windows.Forms.ComboBox();
@@ -341,10 +337,6 @@
             this.tpgBasic.Controls.Add(this.lblLPSValue);
             this.tpgBasic.Controls.Add(this.lblFPS);
             this.tpgBasic.Controls.Add(this.lblLPS);
-            this.tpgBasic.Controls.Add(this.button1);
-            this.tpgBasic.Controls.Add(this.txbKeyToValidate);
-            this.tpgBasic.Controls.Add(this.btnCheckKey);
-            this.tpgBasic.Controls.Add(this.btnGenKey);
             this.tpgBasic.Controls.Add(this.lblFileType);
             this.tpgBasic.Controls.Add(this.txbFileType);
             this.tpgBasic.Controls.Add(this.btnClear);
@@ -400,47 +392,6 @@
             this.lblLPS.TabIndex = 25;
             this.lblLPS.Text = "LPS:";
             this.lblLPS.Visible = false;
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(262, 127);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(139, 33);
-            this.button1.TabIndex = 24;
-            this.button1.Text = "Full key test";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Visible = false;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // txbKeyToValidate
-            // 
-            this.txbKeyToValidate.Location = new System.Drawing.Point(163, 82);
-            this.txbKeyToValidate.Name = "txbKeyToValidate";
-            this.txbKeyToValidate.Size = new System.Drawing.Size(260, 26);
-            this.txbKeyToValidate.TabIndex = 23;
-            this.txbKeyToValidate.Visible = false;
-            // 
-            // btnCheckKey
-            // 
-            this.btnCheckKey.Location = new System.Drawing.Point(429, 118);
-            this.btnCheckKey.Name = "btnCheckKey";
-            this.btnCheckKey.Size = new System.Drawing.Size(133, 42);
-            this.btnCheckKey.TabIndex = 22;
-            this.btnCheckKey.Text = "Validate a key";
-            this.btnCheckKey.UseVisualStyleBackColor = true;
-            this.btnCheckKey.Visible = false;
-            this.btnCheckKey.Click += new System.EventHandler(this.btnCheckKey_Click);
-            // 
-            // btnGenKey
-            // 
-            this.btnGenKey.Location = new System.Drawing.Point(429, 70);
-            this.btnGenKey.Name = "btnGenKey";
-            this.btnGenKey.Size = new System.Drawing.Size(133, 42);
-            this.btnGenKey.TabIndex = 21;
-            this.btnGenKey.Text = "Generate a key";
-            this.btnGenKey.UseVisualStyleBackColor = true;
-            this.btnGenKey.Visible = false;
-            this.btnGenKey.Click += new System.EventHandler(this.btnGenKey_Click);
             // 
             // lblFileType
             // 
@@ -858,16 +809,14 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(125, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
             // registerToolStripMenuItem
             // 
             this.registerToolStripMenuItem.Name = "registerToolStripMenuItem";
-            this.registerToolStripMenuItem.Size = new System.Drawing.Size(125, 22);
-            this.registerToolStripMenuItem.Text = "Register...";
-            this.registerToolStripMenuItem.Click += new System.EventHandler(this.registerToolStripMenuItem_Click);
+            this.registerToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             // 
             // frmMain
             // 
@@ -968,10 +917,6 @@
         private System.Windows.Forms.TextBox txbFileType;
         private System.Windows.Forms.CheckBox cbOnlyFiles;
         private System.Windows.Forms.Label lblCrippled;
-        private System.Windows.Forms.Button btnGenKey;
-        private System.Windows.Forms.TextBox txbKeyToValidate;
-        private System.Windows.Forms.Button btnCheckKey;
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.CheckBox cbIncludeOffice;
         private System.Windows.Forms.ProgressBar pbar;
         private System.Windows.Forms.Label lblStats;

@@ -11,7 +11,10 @@ namespace Findit
     //their increments being lost).
     public struct PerfStat
     {
-        public int LinesSearched;   //# of lines actually scanned for results.  does not include lines beyond a "found" result.
+        //# of lines actually scanned for results.  does not include lines beyond the point
+        //where the answer was already settled.  long, not int: this is a running total
+        //across every file in the search and a big drive will pass 2 billion lines.
+        public long LinesSearched;
         public int FilesMatched;    //# of files matching the search criteria.
         public int FilesUnmatched;  //# of files searched, but found wanting
         public int BinarySkipped;   //# of files skipped because they were binary files.
