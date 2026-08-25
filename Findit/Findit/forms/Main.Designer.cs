@@ -48,10 +48,6 @@
             this.grbBasicOptions = new System.Windows.Forms.GroupBox();
             this.tabctlSearchOptions = new System.Windows.Forms.TabControl();
             this.tpgBasic = new System.Windows.Forms.TabPage();
-            this.lblFPSValue = new System.Windows.Forms.Label();
-            this.lblLPSValue = new System.Windows.Forms.Label();
-            this.lblFPS = new System.Windows.Forms.Label();
-            this.lblLPS = new System.Windows.Forms.Label();
             this.lblFileType = new System.Windows.Forms.Label();
             this.lblSearchTerms = new System.Windows.Forms.Label();
             this.cboSearchFolders = new System.Windows.Forms.ComboBox();
@@ -332,10 +328,6 @@
             // tpgBasic
             // 
             this.tpgBasic.BackColor = System.Drawing.SystemColors.Control;
-            this.tpgBasic.Controls.Add(this.lblFPSValue);
-            this.tpgBasic.Controls.Add(this.lblLPSValue);
-            this.tpgBasic.Controls.Add(this.lblFPS);
-            this.tpgBasic.Controls.Add(this.lblLPS);
             this.tpgBasic.Controls.Add(this.lblFileType);
             this.tpgBasic.Controls.Add(this.txbFileType);
             this.tpgBasic.Controls.Add(this.btnClear);
@@ -351,46 +343,6 @@
             this.tpgBasic.Size = new System.Drawing.Size(1262, 181);
             this.tpgBasic.TabIndex = 0;
             this.tpgBasic.Text = "Basic options";
-            // 
-            // lblFPSValue
-            // 
-            this.lblFPSValue.AutoSize = true;
-            this.lblFPSValue.Location = new System.Drawing.Point(1071, 70);
-            this.lblFPSValue.Name = "lblFPSValue";
-            this.lblFPSValue.Size = new System.Drawing.Size(15, 18);
-            this.lblFPSValue.TabIndex = 28;
-            this.lblFPSValue.Text = "0";
-            this.lblFPSValue.Visible = false;
-            // 
-            // lblLPSValue
-            // 
-            this.lblLPSValue.AutoSize = true;
-            this.lblLPSValue.Location = new System.Drawing.Point(1071, 43);
-            this.lblLPSValue.Name = "lblLPSValue";
-            this.lblLPSValue.Size = new System.Drawing.Size(15, 18);
-            this.lblLPSValue.TabIndex = 27;
-            this.lblLPSValue.Text = "0";
-            this.lblLPSValue.Visible = false;
-            // 
-            // lblFPS
-            // 
-            this.lblFPS.AutoSize = true;
-            this.lblFPS.Location = new System.Drawing.Point(1030, 70);
-            this.lblFPS.Name = "lblFPS";
-            this.lblFPS.Size = new System.Drawing.Size(34, 18);
-            this.lblFPS.TabIndex = 26;
-            this.lblFPS.Text = "FPS:";
-            this.lblFPS.Visible = false;
-            // 
-            // lblLPS
-            // 
-            this.lblLPS.AutoSize = true;
-            this.lblLPS.Location = new System.Drawing.Point(1031, 43);
-            this.lblLPS.Name = "lblLPS";
-            this.lblLPS.Size = new System.Drawing.Size(33, 18);
-            this.lblLPS.TabIndex = 25;
-            this.lblLPS.Text = "LPS:";
-            this.lblLPS.Visible = false;
             // 
             // lblFileType
             // 
@@ -904,10 +856,6 @@
         private System.Windows.Forms.CheckBox cbIncludeOffice;
         private System.Windows.Forms.ProgressBar pbar;
         private System.Windows.Forms.Label lblStats;
-        private System.Windows.Forms.Label lblFPS;
-        private System.Windows.Forms.Label lblLPS;
-        private System.Windows.Forms.Label lblFPSValue;
-        private System.Windows.Forms.Label lblLPSValue;
 
     }
 }
