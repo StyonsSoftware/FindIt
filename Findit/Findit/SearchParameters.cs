@@ -170,9 +170,6 @@ namespace Findit
         public SearchParameters()
         {
             //the base constructor opens the registry key and calls LoadFromRegistry.
-            //this used to do all of that a second time and overwrite the key the base had
-            //just opened, which leaked that key and read the whole of the registry twice
-            //for every single one of these that got built.
         }
 
         public override void SaveToRegistry()

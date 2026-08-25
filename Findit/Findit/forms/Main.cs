@@ -48,8 +48,10 @@ namespace Findit
       //permit passing a saved search as a start parameter.
       //this facilitates the ability to double-click a ".fit" file and
       //launch the application with the saved terms
+      //argument [0] is our own exe, which of course exists - so this checked the wrong one
+      //and the saved search we were handed was never the thing being tested for
       string[] cmdLineArgs = Environment.GetCommandLineArgs();
-      if ((1 < cmdLineArgs.Length) && (System.IO.File.Exists(cmdLineArgs[0])))
+      if ((1 < cmdLineArgs.Length) && (System.IO.File.Exists(cmdLineArgs[1])))
       {
         LoadSavedSearch(cmdLineArgs[1]);
       }
@@ -71,21 +73,10 @@ namespace Findit
 
     private int SizeOfSearchTermsBox(ref RichTextBox searchTermsBox, int minimumSize, int maximumSize, int buffer)
     {
-      /*
-       * Size of the search terms box:
-       * Minimum = width of the label above it + [buffer]
-       * Maximum = up to edge of the form - [buffer]
-       * Preferred = width of the widest text item in the box + [buffer]
-      */
-
-      //int minimumSize = lblSearchTerms.Width + buffer;
-      //int maximumSize = tpgBasic.Width - rtbSearchTerms.Left - buffer;
-
-      //calculate the "preferred size"
       int preferredSize = 0;
       foreach (string s in rtbSearchTerms.Lines)
       {
-        preferredSize = Math.Max(preferredSize, Util.GetPixelWidthOfFormattedText(s, searchTermsBox.Font, searchTermsBox.Width)) + buffer;
+        preferredSize = Math.Max(preferredSize, Util.GetPixelWidthOfFormattedText(s, searchTermsBox.Font, searchTermsBox.Width) + buffer);
       }
 
       if (preferredSize > maximumSize)
@@ -200,10 +191,7 @@ namespace Findit
         Globals.statBoard.Halt = true;
       }
 
-      //hand this search a brand new queue rather than emptying the old one.  threads left
-      //over from the previous search hold references to the old queue and the old status
-      //board, so they can finish winding down without touching a thing this search uses.
-      //clearing the shared queue out from under them is what used to crash the next search.
+      //hand this search a brand new queue (vs emptying the old one)
       Globals.fileQueue = new FileQueue();
 
       runSearchToolStripMenuItem.Visible = false;
@@ -279,7 +267,10 @@ namespace Findit
       int searchThreadCount;
       using (GUIPreferences gp = new GUIPreferences())
       {
-        searchThreadCount = gp.SearchThreadCount;
+        //clamped, because a count of zero starts no search threads at all - and a search
+        //with nobody searching reports itself complete straight away with no matches,
+        //which is indistinguishable from "your terms are not in any of these files"
+        searchThreadCount = GUIPreferences.ClampThreadCount(gp.SearchThreadCount);
       }
       Array.Resize(ref searchers, searchThreadCount);
       Globals.statBoard = new StatusBoard(searchThreadCount);
@@ -415,19 +406,31 @@ namespace Findit
 
     private void RefreshSearchResults()
     {
-      //report any new results found
-      for (int i = 0; i < searchers.Length; ++i)
+      //report any new results found.
+      //
+      //Begin/EndUpdate around the whole batch, not one Add at a time.  Every Add to a
+      //ListBox otherwise re-measures the horizontal extent and repaints, so a search
+      //turning up thousands of files spent its time drawing a list nobody could read at
+      //that speed - and the repaints came out of the same thread doing the reporting.
+      lbResults.BeginUpdate();
+      try
       {
-        int resultCountFromThisThread = searchers[i].SearchResultCount;
-        //display any new results reported by any of the threads
-        if (resultCountFromThisThread > lastReportedIndexes[i])
+        for (int i = 0; i < searchers.Length; ++i)
         {
+          //read the count once, before the entries.  the search thread fills an entry in
+          //and then increments this, so everything below the count we just read is
+          //written; re-reading it per iteration could walk past what has been filled in.
+          int resultCountFromThisThread = System.Threading.Volatile.Read(ref searchers[i].SearchResultCount);
           for (int j = lastReportedIndexes[i]; j < resultCountFromThisThread; ++j)
           {
             WriteMatch(searchers[i].SearchResults[j].FileName, searchers[i].SearchResults[j].LineNumber);
           }
+          lastReportedIndexes[i] = resultCountFromThisThread;
         }
-        lastReportedIndexes[i] = resultCountFromThisThread;
+      }
+      finally
+      {
+        lbResults.EndUpdate();
       }
     }
 
@@ -485,7 +488,7 @@ namespace Findit
         cancelSearchToolStripMenuItem.Visible = true;
         lblProgress.Text = Globals.statBoard.LastSearchedFolder;
         btnClear.Enabled = false;
-        RefreshProgressBar(false);
+        RefreshProgressBar();
       }
       else
       {
@@ -503,24 +506,25 @@ namespace Findit
           lblProgress.Text = @"Error: " + Globals.statBoard.UserFacingError;
         }
         btnClear.Enabled = true;
-        RefreshProgressBar(true);
+        RefreshProgressBar();
       }
       SetEnabledStatesDuringSearch(!btnSearch.Enabled);
       btnCancel.Enabled = !btnSearch.Enabled;
     }
 
-    private void RefreshProgressBar(bool final)
+    private void RefreshProgressBar()
     {
+      //added up here, from each thread's own tally, every time the display refreshes.
+      //It used to be one shared counter that every search thread bumped with an interlocked
+      //increment once per file, which is a contended write a few thousand times a second
+      //for the sake of a number that is read four times a second.
       int filesSearched = 0;
-      if (final)
+      foreach (Grepper g in searchers)
       {
-        foreach (Grepper g in searchers)
-        {
-          filesSearched += g.perfStats.TotalFilesProcessed;
-        }
-        Globals.statBoard.FilesSearched = filesSearched;
+        filesSearched += g.perfStats.TotalFilesProcessed;
       }
-      filesSearched = Globals.statBoard.FilesSearched;
+      Globals.statBoard.FilesSearched = filesSearched;
+
       int filesToBeSearchedCount = Globals.statBoard.FilesToBeSearchedCount;
       pbar.Maximum = filesToBeSearchedCount;
       pbar.Value = Math.Min(filesSearched, filesToBeSearchedCount);
@@ -580,16 +584,6 @@ namespace Findit
       }
     }
 
-    /*
-    Every row in lbResults has a matching entry at the same index in listBoxFiles, and that
-    entry is the only place the real file name and line number live.
-
-    The row *text* is for reading, and it is not a path: it may have a line number stuck on
-    the end of it, or be a line of performance stats that is not a file at all.  Treating
-    the row text as a file name is exactly what used to happen, which is why preview,
-    open-in-editor and open-enclosing-folder all stopped working the moment you ticked
-    "include line numbers".  Go through SelectedResultsFile instead - never lbResults.Items.
-    //*/
     private void AddResultRow(string displayText, string fileName, Int64 lineNumber)
     {
       lbResults.Items.Add(displayText);
@@ -906,14 +900,17 @@ namespace Findit
 
     private void CopyResultsToClipboard()
     {
-      string copytext = "";
+      //a StringBuilder, not "copytext += ...".  Each += builds a whole new string holding
+      //everything copied so far, so copying a result list of any size was quadratic in the
+      //length of the text and froze the window while it ran.
+      System.Text.StringBuilder copytext = new System.Text.StringBuilder();
       foreach (string s in lbResults.Items)
       {
-        copytext += (s + Environment.NewLine);
+        copytext.Append(s).Append(Environment.NewLine);
       }
       if (0 < copytext.Length)
       {
-        Clipboard.SetText(copytext.Trim());
+        Clipboard.SetText(copytext.ToString().Trim());
       }
       else
       {
@@ -984,18 +981,6 @@ namespace Findit
       public bool finish;
     }
 
-    /*
-    These are read once and kept, rather than re-read on demand.
-
-    Every one of them used to build a GUIPreferences, and building one of those opens a
-    registry key and enumerates every value under it.  The blink settings are consulted for
-    each result row as it is added, so a search that turned up ten thousand files opened and
-    walked the registry ten thousand times - and, before these became disposable, left ten
-    thousand key handles waiting on the finalizer.
-
-    Nothing outside the Options dialog can change them, so this is refreshed on load and
-    again whenever that dialog closes.
-    //*/
     private void RefreshCachedGuiPreferences()
     {
       using (GUIPreferences gp = new GUIPreferences())
@@ -1081,9 +1066,7 @@ namespace Findit
       //return the font that is correct for the given tab index
       //the "correct" font is based on the current font of that tab.
       //
-      //work the style out first and build exactly one Font from it.  this used to build a
-      //Font and then drop it, unused and undisposed, the moment the switch replaced it -
-      //a leaked font handle on every repaint of the tab strip.
+      //work the style out first and build exactly one Font from it
       FontStyle captionStyle = currFont.Style;
       switch (TabIdx)
       {
@@ -1102,12 +1085,6 @@ namespace Findit
 
     private void tabctlSearchOptions_DrawItem(object sender, DrawItemEventArgs e)
     {
-      //this event is the plumbing for the "Advanced Options" tab to be drawn in
-      //italics whenever non-default options are set on that tab.
-      //see the "GetTabCaptionFont" function for the important decision-making
-      //
-      //'using' rather than a run of Dispose calls at the bottom: those disposed BackBrush
-      //twice and never ran at all if the drawing threw.
       string TabName = tabctlSearchOptions.TabPages[e.Index].Text;
       Rectangle r = e.Bounds;
       r = new Rectangle(r.X - 2, r.Y + 3, r.Width + 5, r.Height - 3);
@@ -1204,11 +1181,7 @@ namespace Findit
     {
       if (Serializer.IsLegacySearchFile(filename))
       {
-        return @"'" + filename + @"' was saved by an older version of FindIt."
-            + Environment.NewLine + Environment.NewLine
-            + @"That file format let a saved search run code hidden inside the file, so it is no longer loaded."
-            + Environment.NewLine
-            + @"Set the search up again and save it to get a file this version can read.";
+        return @"'" + filename + @"' was saved by an older version of FindIt and cannot be executed.";
       }
       return @"'" + filename + @"' is not a readable FindIt search file."
           + Environment.NewLine + Environment.NewLine
@@ -1305,20 +1278,6 @@ namespace Findit
       Util.RemoveEmptyEntriesFromCombo(ref cboSearchFolders);
     }
 
-    //private void cbOnlyFiles_CheckedChanged(object sender, EventArgs e)
-    //{
-    //  SetOnlyFilesVisibilites();
-    //}
-
-    //private void SetOnlyFilesVisibilites()
-    //{
-    //  if (rtbSearchTerms.Enabled == cbOnlyFiles.Checked)
-    //  {
-    //    rtbSearchTerms.Enabled = !cbOnlyFiles.Checked;
-    //    rtbExcludes.Enabled = !cbOnlyFiles.Checked;
-    //  }
-    //}
-
     private void txbDynamicResize(object sender, EventArgs e)
     {
       int c_MinSize = 100;
@@ -1326,7 +1285,7 @@ namespace Findit
       TextBox tmp = (sender as TextBox);
 
       if (tmp != null)
-        ((TextBox) sender).Width = Math.Max(Math.Min(c_MaxSize, Util.GetPixelWidthOfFormattedText(tmp.Text, tmp.Font, tmp.Width)), c_MinSize);
+        ((TextBox)sender).Width = Math.Max(Math.Min(c_MaxSize, Util.GetPixelWidthOfFormattedText(tmp.Text, tmp.Font, tmp.Width)), c_MinSize);
     }
 
     private void cboSearchFolders_TextChanged(object sender, EventArgs e)
@@ -1459,23 +1418,8 @@ namespace Findit
     {
       SetSearchTermsWidth();
     }
-
-        private void txbKeyToValidate_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        //private void pbar_Click(object sender, EventArgs e)
-        //{
-        //  return;
-        //  //ShowDebugInfo();
-        //}
-
-        //private void ShowDebugInfo()
-        //{
-        //  Diagnostics dg = new Diagnostics();
-        //  dg.searchers = searchers;
-        //  dg.Show();
-        //}
+    private void txbKeyToValidate_TextChanged(object sender, EventArgs e)
+    {
     }
+  }
 }

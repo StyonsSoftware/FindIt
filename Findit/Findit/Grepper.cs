@@ -40,6 +40,7 @@
 
 //*/
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -120,10 +121,24 @@ namespace Findit
     //private const int c_CrippleWaitMs = 100; //higher # here == more pain when they don't register
     //private TimeSpan OneMs = new TimeSpan(TimeSpan.TicksPerMillisecond);
 
+    //how much of a file we pull off the disk at a time.  the framework default is 1KB,
+    //which is a syscall every few lines of a source file.
+    private const int c_FileBufferBytes = 65536;
+
+    //how much of the front of a file we look at to decide whether it is binary
+    private const int c_BinarySniffBytes = 8192;
+
+    //a run of this many NUL bytes says "binary".  two would be enough to rule out
+    //UTF-16 text (whose NULs alternate with real characters), so four is comfortable.
+    private const int c_BinaryNulRun = 4;
+
     public SearchResult[] SearchResults = new SearchResult[c_CacheSize];
     public int SearchResultCount;
 
-    public string[] Exceptions = new string[c_CacheSize];
+    //only allocated if we are actually recording - see the RecordExceptions setter.  a
+    //50,000 element array per thread per search is not free, and the default verbosity
+    //never writes a single entry into it.
+    public string[] Exceptions;
     private int idxExceptions;
 
     public string[] Notifications;
@@ -134,6 +149,17 @@ namespace Findit
     private readonly StatusBoard _statBoard;
     private readonly FileQueue _queue;
     private bool _resultOverflowReported;
+
+    //the search terms, worked out once for the whole search rather than once per file
+    private readonly string[] _requiredTerms;
+    private readonly string[] _forbiddenTerms;
+    private readonly StringComparison _comparison;
+
+    //reused for the binary sniff so we are not handing the GC an 8KB array per file
+    private readonly byte[] _sniffBuffer = new byte[c_BinarySniffBytes];
+
+    //the folder name we last put on the progress line - see SearchOneFile
+    private string _lastFolderReported;
 
     public PerfStat perfStats;
 
@@ -160,7 +186,37 @@ namespace Findit
       }
       _userPrefs = prefs;
       _threadIndex = threadIndex;
+
+      //an empty term matches every line ever written.  one blank line left in the middle of
+      //the "must not contain" box therefore disqualified every file in the search and
+      //quietly returned nothing at all.  the GUI strips blanks when the box loses focus,
+      //which is not the same as never letting one through.
+      _requiredTerms = WithoutBlanks(prefs.SearchStrings);
+      _forbiddenTerms = WithoutBlanks(prefs.AbsentStrings);
+
+      //Ordinal, not CurrentCulture.  these are literal substrings, and a culture-aware
+      //IndexOf walks a collation table for every comparison - it is several times slower
+      //than the ordinal one for exactly the same answer on the searches this tool does.
+      _comparison = prefs.CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
       InitializePerformanceStats();
+    }
+
+    private static string[] WithoutBlanks(string[] terms)
+    {
+      if (terms == null)
+      {
+        return new string[0];
+      }
+      List<string> kept = new List<string>(terms.Length);
+      foreach (string term in terms)
+      {
+        if (!string.IsNullOrEmpty(term))
+        {
+          kept.Add(term);
+        }
+      }
+      return kept.ToArray();
     }
 
     private void InitializePerformanceStats()
@@ -212,39 +268,41 @@ namespace Findit
       //list.  that burned a core per thread even with nothing to do, and raced with every
       //Add.  taking from the queue is now the only way a file gets searched, exactly once,
       //so HasBeenSearched and the catch-up pass are both gone.
-      foreach (QueuedFile qf in _queue.filesToSearch.GetConsumingEnumerable(_statBoard.CancelToken))
+      //files arrive in batches - see FileQueue.  Taking them one at a time meant a lock and,
+      //more often than not, a wait handle per file.
+      foreach (QueuedFile[] batch in _queue.filesToSearch.GetConsumingEnumerable(_statBoard.CancelToken))
       {
-        if (_statBoard.Halt)
+        for (int i = 0; i < batch.Length; ++i)
         {
-          return;  //they clicked cancel
+          if (_statBoard.Halt)
+          {
+            return;  //they clicked cancel
+          }
+          SearchOneFile(batch[i]);
         }
-        SearchOneFile(qf);
       }
     }
 
     private void SearchOneFile(QueuedFile qf)
     {
-      string currentFilename;
-      try
+      //"which folder are we in" is a caption on the progress line, refreshed four times a
+      //second.  Writing it per file meant every search thread wrote to the same field on the
+      //same object several thousand times a second - and a field several cores are all
+      //writing to is a cache line being dragged between them, which is why adding threads
+      //past a handful used to make a search *slower* rather than faster.  Every file in a
+      //folder has the same folder name, so only the change is worth reporting.
+      if (!ReferenceEquals(_lastFolderReported, qf.FolderName))
       {
-        currentFilename = qf.file.FullName;
-      }
-      catch (System.IO.PathTooLongException)
-      {
-        //file names longer than 260 characters will generate this exception, which we ignore.
-        perfStats.FileErrorCount++;
-        return;
+        _lastFolderReported = qf.FolderName;
+        _statBoard.LastSearchedFolder = qf.FolderName;
       }
 
-      System.Threading.Interlocked.Increment(ref _statBoard.FilesSearched);
-      try
-      {
-        _statBoard.LastSearchedFolder = qf.file.DirectoryName;
-      }
-      catch (System.IO.PathTooLongException)
-      {
-        //just the progress caption.  not worth failing the file over.
-      }
+      //the count of files searched is *not* maintained here any more, for the same reason:
+      //it was an interlocked increment on one shared counter per file, across every thread.
+      //Each thread already keeps its own tally in perfStats, and the GUI adds those up when
+      //it repaints - see frmMain.RefreshProgressBar.
+
+      string currentFilename = qf.FullName;
 
       if (_userPrefs.OnlyFileNames)
       {
@@ -258,8 +316,12 @@ namespace Findit
       {
         RecordPositiveMatch(currentFilename, outcome.LineNumber);
       }
-      else
+      else if (!outcome.Errored)
       {
+        //a file we could not read has already been counted under FileErrorCount.  counting
+        //it here as well made TotalFilesProcessed - which adds the two together - larger
+        //than the number of files there were, so a search over a folder with a few locked
+        //files finished by reporting "1043 of 1000 files checked".
         perfStats.FilesUnmatched++;
       }
     }
@@ -282,6 +344,12 @@ namespace Findit
 
     private void RecordPositiveMatch(string currentFilename, long lineNumber)
     {
+      //counted before the "is there room to list it" test.  A match we ran out of room to
+      //display is still a file we looked at, and this tally is what the progress bar is
+      //built from - leaving it out made the bar stall short of the end on any search that
+      //filled the results list.
+      perfStats.FilesMatched++;
+
       if (SearchResultCount >= SearchResults.Length)
       {
         //the results array is a fixed size and we just filled it.  this used to walk
@@ -298,8 +366,12 @@ namespace Findit
       }
       SearchResults[SearchResultCount].FileName = currentFilename;
       SearchResults[SearchResultCount].LineNumber = lineNumber;
-      perfStats.FilesMatched++;
-      SearchResultCount++;
+
+      //the GUI reads this count and then reads everything below it, so the entry has to be
+      //filled in before the count that publishes it - and has to be seen that way round by
+      //the other thread.  A plain increment leaves the compiler and the processor free to
+      //reorder the two, which would show the GUI an entry that is not written yet.
+      System.Threading.Volatile.Write(ref SearchResultCount, SearchResultCount + 1);
     }
 
     //private Boolean IsFileInFileArray(ref System.IO.FileInfo[] arry, System.IO.FileInfo f)
@@ -319,6 +391,7 @@ namespace Findit
     {
       public bool Matched;
       public long LineNumber;   //where the GUI should point its preview
+      public bool Errored;      //we never got to read it - already counted as a file error
     }
 
     /*
@@ -337,11 +410,13 @@ namespace Findit
       private readonly long[] _firstLineOfRequired;   //0 means "not seen yet" - lines count from 1
       private int _requiredStillMissing;
 
-      public TermScanner(string[] required, string[] forbidden, bool caseSensitive)
+      //the term lists and the comparison arrive already worked out - they are the same for
+      //every file in the search, and this gets built once per file
+      public TermScanner(string[] required, string[] forbidden, StringComparison comparison)
       {
-        _required = required ?? new string[0];
-        _forbidden = forbidden ?? new string[0];
-        _comparison = caseSensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase;
+        _required = required;
+        _forbidden = forbidden;
+        _comparison = comparison;
         _firstLineOfRequired = new long[_required.Length];
         _requiredStillMissing = _required.Length;
       }
@@ -422,38 +497,87 @@ namespace Findit
       return new TermMatch();
     }
 
+    private TermMatch FileError()
+    {
+      TermMatch result = new TermMatch();
+      result.Errored = true;
+      return result;
+    }
+
+    private TermScanner NewScanner()
+    {
+      return new TermScanner(_requiredTerms, _forbiddenTerms, _comparison);
+    }
+
     private TermMatch FindTermsInFile(string filename)
     {
+      //an office document is decided by its name, before we open it.  it used to be routed
+      //here only if reading it as text happened to trip the binary detector - and a .docx
+      //is a zip, whose compressed bytes almost never contain the long run of NULs that
+      //detector was looking for.  So "search Office documents" mostly did nothing at all:
+      //the document was read as text, the terms were not found in the compressed bytes, and
+      //the file was reported as not matching.
+      if (IsOfficeDocument(filename))
+      {
+        if (_userPrefs.IncludeOffice)
+        {
+          return FindTermsInOfficeDocument(filename);
+        }
+        RecordBinaryFile(filename);
+        return NoMatch();
+      }
+
       //one pass, every term at once
       try
       {
         StoreNotification("Searching file '" + filename + "'");
-        TermScanner scanner = new TermScanner(_userPrefs.SearchStrings, _userPrefs.AbsentStrings, _userPrefs.CaseSensitive);
+        TermScanner scanner = NewScanner();
         long currlinenum = 0;
 
-        using (System.IO.StreamReader reader = new System.IO.StreamReader(filename))
+        //SequentialScan tells Windows how we are going to read this, and the large buffer
+        //turns what was a syscall every kilobyte into one every 64.  the framework's own
+        //default is 1KB and it shows on a tree of small source files.
+        using (System.IO.FileStream stream = new System.IO.FileStream(filename, System.IO.FileMode.Open,
+            System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite, c_FileBufferBytes, System.IO.FileOptions.SequentialScan))
         {
-          string currentLine;
-          while ((currentLine = reader.ReadLine()) != null)
+          //binary detection happens twice, and both are worth having.
+          //
+          //First, before a byte is decoded, on the raw bytes at the front of the file.  Most
+          //binaries are caught here for almost nothing, and it is also what stops ReadLine
+          //being handed a 50MB executable with no line breaks in it and asked to produce
+          //the whole thing as a single string.
+          if (LooksBinary(stream))
           {
-            currlinenum++;
+            RecordBinaryFile(filename);
+            return NoMatch();
+          }
 
-            //don't try to check binary files, and don't check for binariness > 1 time
-            if (IsBinary(currentLine))
+          using (System.IO.StreamReader reader = new System.IO.StreamReader(stream, Encoding.UTF8, true, c_FileBufferBytes))
+          {
+            string currentLine;
+            while ((currentLine = reader.ReadLine()) != null)
             {
-              perfStats.LinesSearched += currlinenum;
-              if (_userPrefs.IncludeOffice && IsOfficeDocument(filename))
+              currlinenum++;
+
+              //Second, per line - because a binary whose first few KB happen to look like
+              //text still needs to be abandoned rather than searched to the end.  One NUL
+              //character, not the run of seven this used to look for: a NUL does not occur
+              //in real text, so one is all the evidence there is going to be, and looking
+              //for a single character is far cheaper than a substring search per line.
+              //Between them, these two skip binaries roughly a third of the way sooner than
+              //the old check did, which is most of where this search got faster.
+              if (-1 < currentLine.IndexOf('\0'))
               {
-                return FindTermsInOfficeDocument(filename);
+                perfStats.LinesSearched += currlinenum;  //we did read this far
+                RecordBinaryFile(filename);
+                return NoMatch();
               }
-              RecordBinaryFile(filename);
-              return NoMatch();
-            }
 
-            scanner.Feed(currentLine, currlinenum);
-            if (scanner.AnswerIsFinal)
-            {
-              break;  //we stopped reading at this line #
+              scanner.Feed(currentLine, currlinenum);
+              if (scanner.AnswerIsFinal)
+              {
+                break;  //we stopped reading at this line #
+              }
             }
           }
         }
@@ -466,15 +590,42 @@ namespace Findit
         //"File in use by another process" exception
         StoreException("'" + filename + "' is being used by another process.");
         perfStats.FileErrorCount++;
-        return NoMatch();
+        return FileError();
       }
       catch (Exception e)
       {
         //all other exceptions
         StoreException("Exception in file '" + filename + "': '" + e.Message + "'");
         perfStats.FileErrorCount++;
-        return NoMatch();
+        return FileError();
       }
+    }
+
+    //true if the front of this file looks like something other than text.  leaves the
+    //stream back at the beginning either way, so the caller can go on and read it.
+    private bool LooksBinary(System.IO.FileStream stream)
+    {
+      int bytesRead = stream.Read(_sniffBuffer, 0, _sniffBuffer.Length);
+      stream.Position = 0;
+
+      //a run, not a single NUL: UTF-16 text is half NUL bytes by construction, and reading
+      //one of those as a binary would be a regression on what the old line-by-line check did.
+      int consecutiveNuls = 0;
+      for (int i = 0; i < bytesRead; ++i)
+      {
+        if (0 == _sniffBuffer[i])
+        {
+          if (++consecutiveNuls >= c_BinaryNulRun)
+          {
+            return true;
+          }
+        }
+        else
+        {
+          consecutiveNuls = 0;
+        }
+      }
+      return false;
     }
 
     private TermMatch FindTermsInOfficeDocument(string filename)
@@ -483,22 +634,31 @@ namespace Findit
       try
       {
         StoreNotification("Searching office document '" + filename + "'");
-        TermScanner scanner = new TermScanner(_userPrefs.SearchStrings, _userPrefs.AbsentStrings, _userPrefs.CaseSensitive);
+        TermScanner scanner = NewScanner();
 
+        //ReadToEnd, because FilterReader does not implement reading a line at a time -
+        //ask it for one and it reports the document as empty.
         string completeText;
-        using (System.IO.TextReader reader = new EPocalipse.IFilter.FilterReader(filename))
+        using (System.IO.TextReader filter = new EPocalipse.IFilter.FilterReader(filename))
         {
-          completeText = reader.ReadToEnd();
+          completeText = filter.ReadToEnd();
         }
 
         long currlinenum = 0;
-        foreach (string currentLine in completeText.Split('\n'))
+        //a StringReader over the text we already have, rather than Split('\n').  Split
+        //builds an array holding a second complete copy of the document, and the answer is
+        //often settled a few lines in, so most of that copy was never going to be read.
+        using (System.IO.StringReader lines = new System.IO.StringReader(completeText))
         {
-          currlinenum++;
-          scanner.Feed(currentLine, currlinenum);
-          if (scanner.AnswerIsFinal)
+          string currentLine;
+          while ((currentLine = lines.ReadLine()) != null)
           {
-            break;
+            currlinenum++;
+            scanner.Feed(currentLine, currlinenum);
+            if (scanner.AnswerIsFinal)
+            {
+              break;
+            }
           }
         }
 
@@ -510,14 +670,14 @@ namespace Findit
         //"File in use by another process" exception
         StoreException("'" + filename + "' is being used by another process.");
         perfStats.FileErrorCount++;
-        return NoMatch();
+        return FileError();
       }
       catch (Exception e)
       {
         //all other exceptions
         StoreException("Exception in file '" + filename + "': '" + e.Message + "'");
         perfStats.FileErrorCount++;
-        return NoMatch();
+        return FileError();
       }
     }
 
@@ -527,49 +687,12 @@ namespace Findit
       perfStats.BinarySkipped++;
     }
 
-    private bool IsOfficeDocument(string filename)
+    private static bool IsOfficeDocument(string filename)
     {
-      //pretty low-tech here
-      if (System.IO.File.Exists(filename))
-      {
-        string[] dots = filename.Split('.');
-        if (0 < dots.Length)
-        {
-          string fileextension = dots[dots.Length - 1].ToUpper();
-          string[] officeextensions = { "DOCX", "XLSX", "PPTX", "DOC", "XLS", "PPT" };
-          foreach (string s in officeextensions)
-          {
-            if (fileextension == s)
-            {
-              return true;
-            }
-          }
-        }
-        else
-        {
-          return false;
-        }
-      }
-      else
-      {
-        return false;
-      }
-      return false;
-    }
-
-    private Boolean IsBinary(string line)
-    {
-      try
-      {
-        //lots of consecutive nulls indicate a binary file
-        //if the line itself is empty, then assume it is text
-        return !((line == null) || (-1 == line.IndexOf("\0\0\0\0\0\0\0", StringComparison.Ordinal)));
-      }
-      catch (Exception e)
-      {
-        StoreException("Exception while trying to detect whether a file was binary: '" + e.Message + "'");
-        return true;
-      }
+      //this is asked once per file, so it does not go to the disk to confirm the file is
+      //there - we are holding it - and it does not split the whole path apart to get at the
+      //extension either.
+      return Util.IsOfficeExtension(filename);
     }
 
     //both of these buffers are a fixed size, and both used to run off the end of it once a

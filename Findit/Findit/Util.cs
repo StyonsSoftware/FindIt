@@ -83,20 +83,27 @@ namespace Findit
 
         public static void HighlightWordInRtb(ref RichTextBox rtb, string WordToHighlight)
         {
-            if (0 < WordToHighlight.Trim().Length)
+            if (string.IsNullOrEmpty(WordToHighlight) || (0 == WordToHighlight.Trim().Length))
             {
-                int i = 0;
-                while (i != -1)
+                return;
+            }
+
+            //read the text out once.  RichTextBox.Text goes to the control and builds a
+            //fresh string of the whole document every time it is asked, and this asked once
+            //per match - so highlighting n occurrences copied the excerpt n times over.
+            string haystack = rtb.Text;
+            int i = 0;
+            while (i <= (haystack.Length - WordToHighlight.Length))
+            {
+                i = haystack.IndexOf(WordToHighlight, i, StringComparison.OrdinalIgnoreCase);
+                if (-1 == i)
                 {
-                    i = rtb.Text.IndexOf(WordToHighlight, i, StringComparison.CurrentCultureIgnoreCase);
-                    if (i != -1)
-                    {
-                        rtb.SelectionStart = i;
-                        rtb.SelectionLength = WordToHighlight.Length;
-                        rtb.SelectionColor = Color.Red;
-                        i += WordToHighlight.Length;
-                    }
+                    return;
                 }
+                rtb.SelectionStart = i;
+                rtb.SelectionLength = WordToHighlight.Length;
+                rtb.SelectionColor = Color.Red;
+                i += WordToHighlight.Length;
             }
         }
 
@@ -210,34 +217,47 @@ namespace Findit
             return new string[0];
         }
 
-        public static bool IsOfficeDocument(string filename)
+        private static readonly string[] c_OfficeExtensions =
+            { ".DOCX", ".XLSX", ".PPTX", ".DOC", ".XLS", ".PPT" };
+
+        //does this name end in an extension we hand to the office document filter?
+        //name only - it says nothing about whether the file is there.
+        public static bool IsOfficeExtension(string filename)
         {
-            //pretty low-tech here
-            if (System.IO.File.Exists(filename))
-            {
-                string[] dots = filename.Split('.');
-                if (0 < dots.Length)
-                {
-                    string fileextension = dots[dots.Length - 1].ToUpper();
-                    string[] officeextensions = { "DOCX", "XLSX", "PPTX", "DOC", "XLS", "PPT" };
-                    foreach (string s in officeextensions)
-                    {
-                        if (fileextension == s)
-                        {
-                            return true;
-                        }
-                    }
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
+            if (string.IsNullOrEmpty(filename))
             {
                 return false;
             }
+
+            string fileextension;
+            try
+            {
+                fileextension = System.IO.Path.GetExtension(filename);
+            }
+            catch (ArgumentException)
+            {
+                //invalid characters in the path.  not an office document as far as we care.
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(fileextension))
+            {
+                return false;
+            }
+
+            foreach (string s in c_OfficeExtensions)
+            {
+                if (0 == string.Compare(fileextension, s, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
             return false;
+        }
+
+        public static bool IsOfficeDocument(string filename)
+        {
+            return IsOfficeExtension(filename) && System.IO.File.Exists(filename);
         }
 
     }

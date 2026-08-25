@@ -43,10 +43,26 @@ namespace Findit
     }
 
     public int FilesToBeSearchedCount = 0;
-    public int FilesSearched = 0;  //many threads will be hitting this counter, so it will only be approximate until the end.
+    //how many files have been looked at.  Written only by the GUI thread, which works it
+    //out by adding up each search thread's own tally when it repaints - see
+    //frmMain.RefreshProgressBar.  It used to be incremented by every search thread once per
+    //file, which is a contended write thousands of times a second to produce a number that
+    //is looked at four times a second.
+    public int FilesSearched = 0;
     public bool[] GrepComplete = { };  //written with Volatile.Write - see Grepper.Search
     public string LastSearchedFolder;
     public string UserFacingError = string.Empty;
+
+    //is there anybody left to take a file off the queue?
+    //
+    //the queue has a ceiling, so the walker waits when it fills up.  If every search thread
+    //has already stopped - they all hit an exception, say - nobody is ever going to empty
+    //it again, and a walker waiting for room it will never get would hang the search with
+    //no way out but killing the application.
+    public bool AllGreppersFinished
+    {
+      get { return GrepComplete.All(t => t); }
+    }
     public bool AllDone
     {
       get
@@ -54,7 +70,7 @@ namespace Findit
         //we are finished when:
         //1: they clicked cancel
         //2: we have identified every possible search target and actually searched them all.
-        return Halt || (FileFindingComplete && GrepComplete.All(t => t));
+        return Halt || (FileFindingComplete && AllGreppersFinished);
       }
     }
   }

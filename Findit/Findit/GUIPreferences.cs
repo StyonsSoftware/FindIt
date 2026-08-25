@@ -31,6 +31,14 @@ namespace Findit
         private Boolean m_BlinkOnFinish = false;
         private int m_SearchThreadCount = 1;
 
+        //the options dialog's slider runs between these, and a value outside them makes
+        //setting it throw - which took the whole dialog down.  they are enforced here as
+        //well, because the value also arrives from the registry, where it may be anything
+        //at all, and because a count of zero means a search with nobody searching: it
+        //finishes instantly, reports no matches, and looks exactly like "nothing found".
+        public const int c_MinSearchThreadCount = 1;
+        public const int c_MaxSearchThreadCount = 50;
+
         private const string c_RecentSavedSearches = "RecentSavedSearches";
         private const string c_RecentSearchFolders = "RecentSearchFolders";
         private const string c_CustomEditorExe = "CustomEditorExe";
@@ -84,8 +92,13 @@ namespace Findit
             }
             set
             {
-                m_SearchThreadCount = value;
+                m_SearchThreadCount = ClampThreadCount(value);
             }
+        }
+
+        public static int ClampThreadCount(int requested)
+        {
+            return Math.Min(Math.Max(requested, c_MinSearchThreadCount), c_MaxSearchThreadCount);
         }
 
         public Boolean RunSearchesAfterLoad
