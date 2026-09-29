@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("FindIt")]
 [assembly: AssemblyDescription("A simple utility to search for text, with some useful options to help you find what you really need.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("jstyons@gmail.com")]
+[assembly: AssemblyCompany("NonProfit Complete, LLC.")]
 [assembly: AssemblyProduct("FindIt")]
-[assembly: AssemblyCopyright("Joseph Styons")]
+[assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.0.0")]
-[assembly: AssemblyFileVersion("2.0.0.0")]
+[assembly: AssemblyVersion("3.0.0.0")]
+[assembly: AssemblyFileVersion("3.0.0.0")]
