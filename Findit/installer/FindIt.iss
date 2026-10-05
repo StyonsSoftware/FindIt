@@ -1,10 +1,10 @@
 ; Inno Setup script for FindIt.
 ; Build with installer\build.ps1 (compiles Release, then runs ISCC on this file).
-; Output: installer\Output\FindIt-Setup-<version>.exe
+; Output: installer\Output\FindIt-Setup.exe
 
 #define MyAppName "FindIt"
 #define MyAppExeName "Findit.exe"
-#define MyAppPublisher "Joseph Styons"
+#define MyAppPublisher "Nonprofit Complete"
 #define BinDir "..\Findit\bin\Release"
 ; Version comes from AssemblyFileVersion in Properties\AssemblyInfo.cs
 #define MyAppVersion GetVersionNumbersString(BinDir + "\" + MyAppExeName)
@@ -36,6 +36,8 @@ ArchitecturesInstallIn64BitMode=x64compatible
 ChangesAssociations=yes
 ; .NET Framework 4.8 ships with Windows 10 1903+ and Windows 11
 MinVersion=10.0
+SignTool=artifact
+SignedUninstaller=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -45,10 +47,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "fitassoc"; Description: "Open saved searches (.fit files) with {#MyAppName}"; GroupDescription: "File associations:"
 
 [Files]
-Source: "{#BinDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BinDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion sign
 ; Only declares the .NET 4.8 runtime; if 4.8 is missing, Windows prompts to install it instead of failing oddly
 Source: "{#BinDir}\{#MyAppExeName}.config"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#BinDir}\EPocalipse.IFilter.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BinDir}\EPocalipse.IFilter.dll"; DestDir: "{app}"; Flags: ignoreversion sign
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -59,6 +61,9 @@ Root: HKA; Subkey: "Software\Classes\.fit"; ValueType: string; ValueName: ""; Va
 Root: HKA; Subkey: "Software\Classes\FindIt.SavedSearch"; ValueType: string; ValueName: ""; ValueData: "FindIt Saved Search"; Flags: uninsdeletekey; Tasks: fitassoc
 Root: HKA; Subkey: "Software\Classes\FindIt.SavedSearch\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"; Tasks: fitassoc
 Root: HKA; Subkey: "Software\Classes\FindIt.SavedSearch\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: fitassoc
+; Remove any "Run as administrator" / compatibility settings the user applied to FindIt
+Root: HKLM; Subkey: "Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; ValueType: none; ValueName: "{app}\{#MyAppExeName}"; Flags: uninsdeletevalue dontcreatekey
+Root: HKCU; Subkey: "Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; ValueType: none; ValueName: "{app}\{#MyAppExeName}"; Flags: uninsdeletevalue dontcreatekey
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent

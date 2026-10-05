@@ -1,9 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.10.12210.168 stable
+VisualStudioVersion = 18.10.12210.168
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindIt", "Findit\FindIt.csproj", "{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "installer", "installer", "{F17D69D6-7AC3-4ECE-AF8E-A08D899D7A2F}"
+	ProjectSection(SolutionItems) = preProject
+		installer\build.ps1 = installer\build.ps1
+		installer\FindIt.iss = installer\FindIt.iss
+		installer\signing.json = installer\signing.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,8 +23,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.CD_ROM|Any CPU.ActiveCfg = Release|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.CD_ROM|Any CPU.Build.0 = Release|Any CPU
-		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.DVD-5|Any CPU.ActiveCfg = Debug|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.DVD-5|Any CPU.Build.0 = Debug|Any CPU
 		{D5A04AB0-AB2C-4E60-8A7F-63500244ACED}.Release|Any CPU.ActiveCfg = Release|Any CPU

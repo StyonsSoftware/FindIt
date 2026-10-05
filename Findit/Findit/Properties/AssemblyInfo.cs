@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("FindIt")]
 [assembly: AssemblyDescription("A simple utility to search for text, with some useful options to help you find what you really need.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("NonProfit Complete, LLC.")]
+[assembly: AssemblyCompany("Nonprofit Complete, LLC.")]
 [assembly: AssemblyProduct("FindIt")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]

@@ -62,6 +62,12 @@
     <Prefer32Bit>false</Prefer32Bit>
     <UseWinFormsOutOfProcDesigner>True</UseWinFormsOutOfProcDesigner>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>false</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="EPocalipse.IFilter">
       <HintPath>external dlls\EPocalipse.IFilter.dll</HintPath>
@@ -187,7 +193,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <PropertyGroup>
-    <PostBuildEvent>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)..\installer\build.ps1"</PostBuildEvent>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PostBuildEvent>powershell -NoProfile -ExecutionPolicy Bypass -File "$(ProjectDir)..\installer\build.ps1" -SkipBuild</PostBuildEvent>
   </PropertyGroup>
 </Project>
