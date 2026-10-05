@@ -18,7 +18,7 @@ AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 VersionInfoVersion={#MyAppVersion}
 ; {autopf} = C:\Program Files on 64-bit Windows (the app is AnyCPU, so it runs as 64-bit there)
-DefaultDirName={autopf}\Findit
+DefaultDirName={autopf}\Nonprofit Complete\Findit
 ; Always show the "Select Destination Location" page, even when upgrading an existing install
 DisableDirPage=no
 DefaultGroupName={#MyAppName}
@@ -67,3 +67,15 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+; Remove the install folder even if it existed before Setup ran (only if empty)
+Type: dirifempty; Name: "{app}"
+
+[Code]
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+    // Remove the parent (e.g. "Nonprofit Complete") only if nothing else is in it
+    RemoveDir(ExtractFileDir(ExpandConstant('{app}')));
+end;
