@@ -37,6 +37,22 @@ namespace Findit
 
     private void frmMain_Load(object sender, EventArgs e)
     {
+      if (!IsProductRegistered())
+      {
+        frmRegister reg = new frmRegister();
+        try
+        {
+          if (!(reg.ShowDialog() == DialogResult.OK))
+          {
+            //if they still aren't registered after closing the registration form, then do nothing.
+            return;
+          }
+        }
+        finally
+        {
+          reg.Dispose();
+        }
+      }
       splitCont.Panel2Collapsed = true;
       LoadSearchParameters();
       LoadGuiPreferences();
@@ -347,23 +363,6 @@ namespace Findit
 
     private void btnSearch_Click(object sender, EventArgs e)
     {
-      if (!IsProductRegistered())
-      {
-        frmRegister reg = new frmRegister();
-        try
-        {
-          if (!(reg.ShowDialog() == DialogResult.OK))
-          {
-            //if they still aren't registered after closing the registration form, then do nothing.
-            return;
-          }
-        }
-        finally
-        {
-          reg.Dispose();
-        }
-      }
-
       string validmsg = "";
       if (ValidSearchTerms(ref validmsg))
       {
