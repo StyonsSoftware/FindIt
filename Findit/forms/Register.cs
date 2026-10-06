@@ -33,17 +33,22 @@ namespace Findit.forms
         RegistrationPreferences rp = new RegistrationPreferences();
         rp.RegistrationKey = txbKey.Text;
         rp.SaveToRegistry();
+        MessageBox.Show("Thank you for registering FindIt!");
+        this.DialogResult = DialogResult.OK;
+        Close();
       }
       else
       {
-        MessageBox.Show("Sorry, that key is not valid.  Please refer to the email you received when you purchased FindIt.");
+        MessageBox.Show("Sorry, that key is not valid.  Please refer to the email you received when you purchased FindIt.","Register",
+          MessageBoxButtons.OK,MessageBoxIcon.Warning);
         txbKey.Clear();
+        txbKey.Focus();
       }
-      Close();
     }
 
     private void btnCancel_Click(object sender, EventArgs e)
     {
+      this.DialogResult = DialogResult.Cancel;
       Close();
     }
   }

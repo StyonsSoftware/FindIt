@@ -51,6 +51,7 @@ Source: "{#BinDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion sign
 ; Only declares the .NET 4.8 runtime; if 4.8 is missing, Windows prompts to install it instead of failing oddly
 Source: "{#BinDir}\{#MyAppExeName}.config"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BinDir}\EPocalipse.IFilter.dll"; DestDir: "{app}"; Flags: ignoreversion sign
+Source: "{#BinDir}\NPC.Licensing.dll"; DestDir: "{app}"; Flags: ignoreversion sign
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

@@ -350,10 +350,9 @@ namespace Findit
       if (!IsProductRegistered())
       {
         frmRegister reg = new frmRegister();
-        reg.ShowDialog();
-        //if they still aren't registered after closing the registration form, then do nothing.
-        if (!IsProductRegistered())
+        if(!(reg.ShowDialog() == DialogResult.OK))
         {
+          //if they still aren't registered after closing the registration form, then do nothing.
           return;
         }
       }
