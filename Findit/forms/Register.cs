@@ -27,8 +27,7 @@ namespace Findit.forms
 
     private void btnRegister_Click(object sender, EventArgs e)
     {
-      NPC.Licensing.LicenseKeyHelper lkh = new NPC.Licensing.LicenseKeyHelper();
-      if (lkh.ProductFromKey(txbKey.Text) == "FindIt")
+      if (Licensing.IsValidKey(txbKey.Text))
       {
         RegistrationPreferences rp = new RegistrationPreferences();
         rp.RegistrationKey = txbKey.Text;

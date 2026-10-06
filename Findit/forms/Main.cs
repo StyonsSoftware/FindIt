@@ -37,14 +37,15 @@ namespace Findit
 
     private void frmMain_Load(object sender, EventArgs e)
     {
-      if (!IsProductRegistered())
+      if (!Licensing.IsProductRegistered())
       {
         frmRegister reg = new frmRegister();
         try
         {
           if (!(reg.ShowDialog() == DialogResult.OK))
           {
-            //if they still aren't registered after closing the registration form, then do nothing.
+            //if they still aren't registered after closing the registration form, then exit.
+            Close();
             return;
           }
         }
@@ -378,15 +379,6 @@ namespace Findit
           AddToRecentSearches(cboSearchFolders.Text.Trim());
         }
       }
-    }
-
-    private bool IsProductRegistered()
-    {
-      RegistrationPreferences rp = new RegistrationPreferences();
-      NPC.Licensing.LicenseKeyHelper lkh = new NPC.Licensing.LicenseKeyHelper();
-      Boolean result = lkh.ProductFromKey(rp.RegistrationKey) == "FindIt";
-      rp.Dispose();
-      return result;
     }
 
     private bool ValidSearchTerms(ref string msg)

@@ -5,6 +5,9 @@
 #define MyAppName "FindIt"
 #define MyAppExeName "Findit.exe"
 #define MyAppPublisher "Nonprofit Complete"
+; Where the license key is saved for all users. Must match Licensing.cs in FindIt.
+#define LicenseRegKey "Software\Nonprofit Complete\FindIt"
+#define LicenseRegValue "RegistrationKey"
 #define BinDir "..\Findit\bin\Release"
 ; Version comes from AssemblyFileVersion in Properties\AssemblyInfo.cs
 #define MyAppVersion GetVersionNumbersString(BinDir + "\" + MyAppExeName)
@@ -62,6 +65,9 @@ Root: HKA; Subkey: "Software\Classes\.fit"; ValueType: string; ValueName: ""; Va
 Root: HKA; Subkey: "Software\Classes\FindIt.SavedSearch"; ValueType: string; ValueName: ""; ValueData: "FindIt Saved Search"; Flags: uninsdeletekey; Tasks: fitassoc
 Root: HKA; Subkey: "Software\Classes\FindIt.SavedSearch\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"; Tasks: fitassoc
 Root: HKA; Subkey: "Software\Classes\FindIt.SavedSearch\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: fitassoc
+; The license key validated on the "License key" page, for every user of this PC
+Root: HKLM; Subkey: "{#LicenseRegKey}"; ValueType: string; ValueName: "{#LicenseRegValue}"; ValueData: "{code:GetLicenseKey}"; Flags: uninsdeletevalue uninsdeletekeyifempty
+Root: HKLM; Subkey: "Software\Nonprofit Complete"; Flags: uninsdeletekeyifempty
 ; Remove any "Run as administrator" / compatibility settings the user applied to FindIt
 Root: HKLM; Subkey: "Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; ValueType: none; ValueName: "{app}\{#MyAppExeName}"; Flags: uninsdeletevalue dontcreatekey
 Root: HKCU; Subkey: "Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; ValueType: none; ValueName: "{app}\{#MyAppExeName}"; Flags: uninsdeletevalue dontcreatekey
@@ -74,6 +80,94 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}
 Type: dirifempty; Name: "{app}"
 
 [Code]
+var
+  LicensePage: TInputQueryWizardPage;
+  LicenseKey: String;          // the validated key, saved by the [Registry] entry above
+  LicenseKeyValid: Boolean;
+
+// Keys are pasted from an email, so ignore any line breaks, spaces or quotes picked up on the way.
+function CleanLicenseKey(Key: String): String;
+var
+  I: Integer;
+begin
+  Result := '';
+  for I := 1 to Length(Key) do
+    if (Key[I] > ' ') and (Key[I] <> '"') then
+      Result := Result + Key[I];
+end;
+
+// Asks FindIt itself ("Findit.exe /checkkey <key>", exit code 0 = valid), so the installer
+// uses exactly the same check as the app. Both files are unpacked to a temp folder first.
+function IsValidLicenseKey(Key: String): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := False;
+  if Key = '' then
+    Exit;
+  ExtractTemporaryFile('{#MyAppExeName}');
+  ExtractTemporaryFile('NPC.Licensing.dll');
+  Result := Exec(ExpandConstant('{tmp}\{#MyAppExeName}'), '/checkkey "' + Key + '"', '',
+    SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+end;
+
+function GetLicenseKey(Param: String): String;
+begin
+  Result := LicenseKey;
+end;
+
+procedure InitializeWizard;
+begin
+  LicensePage := CreateInputQueryPage(wpWelcome,
+    'License key', 'Enter your FindIt license key.',
+    'Your license key is in the email you received when you purchased FindIt. ' +
+    'Copy the whole key and paste it below, then click Next.');
+  LicensePage.Add('&License key:', False);
+
+  // Use a key given on the command line (/KEY=...), or the one saved by a previous install.
+  LicenseKey := CleanLicenseKey(ExpandConstant('{param:KEY|}'));
+  if LicenseKey = '' then
+    if RegQueryStringValue(HKLM, '{#LicenseRegKey}', '{#LicenseRegValue}', LicenseKey) then
+      LicenseKey := CleanLicenseKey(LicenseKey);
+  LicensePage.Values[0] := LicenseKey;
+  LicenseKeyValid := IsValidLicenseKey(LicenseKey);
+end;
+
+// Upgrades and reinstalls (and /KEY= with a valid key) don't ask again.
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := (PageID = LicensePage.ID) and LicenseKeyValid;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  Key: String;
+begin
+  Result := True;
+  if CurPageID = LicensePage.ID then
+  begin
+    Key := CleanLicenseKey(LicensePage.Values[0]);
+    LicenseKeyValid := IsValidLicenseKey(Key);
+    if LicenseKeyValid then
+      LicenseKey := Key
+    else
+    begin
+      MsgBox('That license key isn''t valid. Please copy the whole key from your purchase email and try again.',
+        mbError, MB_OK);
+      Result := False;
+    end;
+  end;
+end;
+
+// The final gate, which also covers silent installs (they never show the License key page).
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  if LicenseKeyValid then
+    Result := ''
+  else
+    Result := 'A valid FindIt license key is required. For a silent install, pass it as /KEY=<license key>.';
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usPostUninstall then

@@ -119,6 +119,7 @@
     <Compile Include="ProcessorFileQueue.cs" />
     <Compile Include="QueueBuilder.cs" />
     <Compile Include="QueuedFile.cs" />
+    <Compile Include="Licensing.cs" />
     <Compile Include="RegistrationPreferences.cs" />
     <Compile Include="SavedSearch.cs" />
     <Compile Include="SearchParameters.cs" />
