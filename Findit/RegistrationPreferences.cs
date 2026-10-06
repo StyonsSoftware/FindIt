@@ -22,7 +22,7 @@ namespace Findit
       object k = reg.GetValue(c_RegistrationKey);
       if (k != null)
       {
-        RegistrationKey = reg.GetValue(c_RegistrationKey).ToString();
+        RegistrationKey = k.ToString();
       }
     }
 
