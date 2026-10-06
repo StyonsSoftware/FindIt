@@ -72,6 +72,9 @@
     <Reference Include="EPocalipse.IFilter">
       <HintPath>external dlls\EPocalipse.IFilter.dll</HintPath>
     </Reference>
+    <Reference Include="NPC.Licensing">
+      <HintPath>external dlls\NPC.Licensing.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -103,6 +106,12 @@
     <Compile Include="forms\Config.Designer.cs">
       <DependentUpon>Config.cs</DependentUpon>
     </Compile>
+    <Compile Include="forms\Register.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="forms\Register.Designer.cs">
+      <DependentUpon>Register.cs</DependentUpon>
+    </Compile>
     <Compile Include="Globals.cs" />
     <Compile Include="Grepper.cs" />
     <Compile Include="GUIPreferences.cs" />
@@ -110,6 +119,7 @@
     <Compile Include="ProcessorFileQueue.cs" />
     <Compile Include="QueueBuilder.cs" />
     <Compile Include="QueuedFile.cs" />
+    <Compile Include="RegistrationPreferences.cs" />
     <Compile Include="SavedSearch.cs" />
     <Compile Include="SearchParameters.cs" />
     <Compile Include="forms\Main.cs">
@@ -133,6 +143,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="forms\Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="forms\Register.resx">
+      <DependentUpon>Register.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

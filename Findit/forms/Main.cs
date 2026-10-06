@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Threading;
+using Findit.forms;
 
 namespace Findit
 {
@@ -346,6 +347,16 @@ namespace Findit
 
     private void btnSearch_Click(object sender, EventArgs e)
     {
+      if (!IsProductRegistered())
+      {
+        frmRegister reg = new frmRegister();
+        reg.ShowDialog();
+        //if they still aren't registered after closing the registration form, then do nothing.
+        if (!IsProductRegistered())
+        {
+          return;
+        }
+      }
       string validmsg = "";
       if (ValidSearchTerms(ref validmsg))
       {
@@ -361,6 +372,13 @@ namespace Findit
           AddToRecentSearches(cboSearchFolders.Text.Trim());
         }
       }
+    }
+
+    private bool IsProductRegistered()
+    {
+      RegistrationPreferences rp = new RegistrationPreferences();
+      NPC.Licensing.LicenseKeyHelper lkh = new NPC.Licensing.LicenseKeyHelper();
+      return lkh.ProductFromKey(rp.RegistrationKey) == "FindIt";
     }
 
     private bool ValidSearchTerms(ref string msg)
@@ -1417,9 +1435,6 @@ namespace Findit
     private void rtbSearchTerms_KeyPress(object sender, KeyPressEventArgs e)
     {
       SetSearchTermsWidth();
-    }
-    private void txbKeyToValidate_TextChanged(object sender, EventArgs e)
-    {
     }
   }
 }

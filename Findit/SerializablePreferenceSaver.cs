@@ -13,7 +13,7 @@ namespace Findit
     public class SerializablePreferenceSaver : ISerializable, IDisposable
     {
         public RegistryKey reg;
-        public const string c_RegKeyName = @"Software\FindIt";
+        public const string c_RegKeyName = @"Software\Nonprofit Complete\FindIt";
 
         public SerializablePreferenceSaver()
         {

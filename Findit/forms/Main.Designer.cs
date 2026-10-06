@@ -108,7 +108,7 @@
             this.btnCancel.Dock = System.Windows.Forms.DockStyle.Left;
             this.btnCancel.Enabled = false;
             this.btnCancel.Font = new System.Drawing.Font("Calibri", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancel.Image = ((System.Drawing.Image)(resources.GetObject("btnCancel.Image")));
+            this.btnCancel.Image = global::Findit.Properties.Resources.Cancel;
             this.btnCancel.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnCancel.Location = new System.Drawing.Point(0, 0);
             this.btnCancel.Margin = new System.Windows.Forms.Padding(4);
@@ -744,7 +744,7 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
@@ -848,7 +848,6 @@
         private System.Windows.Forms.CheckBox cbIncludeOffice;
         private System.Windows.Forms.ProgressBar pbar;
         private System.Windows.Forms.Label lblStats;
-
     }
 }
 
