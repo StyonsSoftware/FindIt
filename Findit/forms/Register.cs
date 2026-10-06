@@ -33,6 +33,7 @@ namespace Findit.forms
         RegistrationPreferences rp = new RegistrationPreferences();
         rp.RegistrationKey = txbKey.Text;
         rp.SaveToRegistry();
+        rp.Dispose();
         MessageBox.Show(this,"Thank you for registering FindIt!");
         this.DialogResult = DialogResult.OK;
       }
