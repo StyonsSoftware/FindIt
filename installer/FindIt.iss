@@ -66,7 +66,7 @@ Root: HKA; Subkey: "Software\Classes\FindIt.SavedSearch"; ValueType: string; Val
 Root: HKA; Subkey: "Software\Classes\FindIt.SavedSearch\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"; Tasks: fitassoc
 Root: HKA; Subkey: "Software\Classes\FindIt.SavedSearch\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: fitassoc
 ; The license key validated on the "License key" page, for every user of this PC
-Root: HKLM; Subkey: "{#LicenseRegKey}"; ValueType: string; ValueName: "{#LicenseRegValue}"; ValueData: "{code:GetLicenseKey}"; Flags: uninsdeletevalue uninsdeletekeyifempty
+Root: HKLM; Subkey: "{#LicenseRegKey}"; ValueType: string; ValueName: "{#LicenseRegValue}"; ValueData: "{code:GetLicenseKey}"; Flags: uninsdeletekey
 Root: HKLM; Subkey: "Software\Nonprofit Complete"; Flags: uninsdeletekeyifempty
 ; Remove any "Run as administrator" / compatibility settings the user applied to FindIt
 Root: HKLM; Subkey: "Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; ValueType: none; ValueName: "{app}\{#MyAppExeName}"; Flags: uninsdeletevalue dontcreatekey
@@ -168,9 +168,37 @@ begin
     Result := 'A valid FindIt license key is required. For a silent install, pass it as /KEY=<license key>.';
 end;
 
+// Deletes FindIt's registry key, then the "Nonprofit Complete" key above it if nothing else is left in it.
+procedure DeleteFindItRegistryKey(RootKey: Integer; UserPath: String);
+begin
+  RegDeleteKeyIncludingSubkeys(RootKey, UserPath + '{#LicenseRegKey}');
+  RegDeleteKeyIfEmpty(RootKey, UserPath + 'Software\Nonprofit Complete');
+end;
+
+// FindIt keeps each user's preferences (and a key entered in its Register form) under
+// HKEY_CURRENT_USER. Clean up every user who is signed in right now; a user who isn't signed in
+// has their registry unloaded, so it can't be reached without loading other people's profiles.
+procedure DeleteUserRegistryKeys;
+var
+  Users: TArrayOfString;
+  I: Integer;
+begin
+  DeleteFindItRegistryKey(HKCU, '');
+  if RegGetSubkeyNames(HKEY_USERS, '', Users) then
+    for I := 0 to GetArrayLength(Users) - 1 do
+      // Skip the "S-1-5-..._Classes" entries, which are file associations rather than users
+      if (Pos('_Classes', Users[I]) = 0) then
+        DeleteFindItRegistryKey(HKEY_USERS, Users[I] + '\');
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usPostUninstall then
+  begin
+    // The machine-wide license key ([Registry] removes it too; this also catches anything added later)
+    DeleteFindItRegistryKey(HKLM, '');
+    DeleteUserRegistryKeys;
     // Remove the parent (e.g. "Nonprofit Complete") only if nothing else is in it
     RemoveDir(ExtractFileDir(ExpandConstant('{app}')));
+  end;
 end;
