@@ -720,8 +720,8 @@ namespace Findit
       //Display an excerpt of the selected file, centered on the specified line number
       rtb.Clear();
       Int64 LastReadLine = 1;
-      Int64 StartPoint = linenumber - 10;
-      Int64 EndPoint = linenumber + 10;
+      Int64 StartPoint = linenumber - 50;
+      Int64 EndPoint = linenumber + 50;
       Int64 maxCutoff = 1000;
       Int64 iters = 0;
       //'using': the Close at the bottom never ran if anything in here threw, and the caller
