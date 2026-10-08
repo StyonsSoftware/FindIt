@@ -443,6 +443,7 @@
             this.cbOnlyFiles.TabIndex = 26;
             this.cbOnlyFiles.Text = "Only search for file names";
             this.cbOnlyFiles.UseVisualStyleBackColor = true;
+            this.cbOnlyFiles.Visible = false;
             // 
             // lblExcludes
             // 
