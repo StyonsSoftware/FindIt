@@ -1,6 +1,7 @@
 # Builds FindIt, Signs findit, Builds the installer, then signs that as well.
 # This is executed as a post-build event from the IDE.
 # When executed in that way, the "SkipBuild" parameter is specified, because the IDE has done the build in that scenario.
+# If you execute this directly from PowerShell, then it will invoke MSBuild to do the build from here.
 # Usage: powershell -ExecutionPolicy Bypass -File installer\build.ps1 [-SkipBuild]
 # If this fails with credential issues, try running "az login" to re-authenticate with azure.
 param([switch]$SkipBuild)
@@ -23,8 +24,7 @@ $iscc = foreach ($ver in 7, 6) {
 $iscc = $iscc | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $iscc) { throw 'Inno Setup not found. Install it with: winget install JRSoftware.InnoSetup' }
 
-# Build the application itself, unless asked not to.  (The post-build event uses the 'SkipBuild' flag).
-# Note that if we build from here, the post build event is *not* fired, because that would perform a second unnecessary signing.
+# Build the application itself, unless asked not to.
 if (-not $SkipBuild) {
   & $msbuild "$root\Findit.sln" /p:Configuration=Release /t:Rebuild /v:minimal /nologo /p:PostBuildEvent=
   if ($LASTEXITCODE -ne 0) { throw "MSBuild failed ($LASTEXITCODE)" }
@@ -46,3 +46,5 @@ $signCmd  = "`$q$signtool`$q sign /fd SHA256 /tr http://timestamp.acs.microsoft.
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
 
 Get-ChildItem "$PSScriptRoot\Output\*.exe" | Select-Object Name, Length, LastWriteTime
+
+Copy-Item "$PSScriptRoot\Output\*.exe" "C:\Users\josep\source\repos\SSCWebSite\site\nonprofit-complete.com\downloads\" -force
